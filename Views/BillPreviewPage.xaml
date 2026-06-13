@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.BillPreviewPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Invoice Preview"
+    BackgroundColor="#F0EEFF">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="PDF"   Clicked="OnGeneratePdfClicked" />
+        <ToolbarItem Text="Share" Clicked="OnShareClicked" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="10,10,10,4" Spacing="0">
+
+                <!-- ══ COMPANY HEADER ══════════════════════════════════════ -->
+                <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                       CornerRadius="10,10,0,0" Padding="14,12" HasShadow="False"
+                       Margin="0">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                        <!-- Left: company -->
+                        <Label Grid.Row="0" Grid.Column="0"
+                               x:Name="CompanyLabel"
+                               FontSize="18" FontAttributes="Bold" TextColor="White" />
+                        <Label Grid.Row="1" Grid.Column="0"
+                               x:Name="CompanyAddressLabel"
+                               FontSize="11" TextColor="#DDD8FF" />
+                        <Label Grid.Row="2" Grid.Column="0"
+                               x:Name="CompanyContactLabel"
+                               FontSize="11" TextColor="#DDD8FF" />
+                        <!-- Right: invoice label -->
+                        <VerticalStackLayout Grid.Row="0" Grid.RowSpan="3" Grid.Column="1"
+                                             HorizontalOptions="End" VerticalOptions="Start"
+                                             Spacing="2">
+                            <Label Text="TAX INVOICE"
+                                   FontSize="13" FontAttributes="Bold"
+                                   TextColor="White" HorizontalOptions="End" />
+                            <Label x:Name="BillNumberLabel"
+                                   FontSize="12" TextColor="#DDD8FF" HorizontalOptions="End" />
+                            <Label x:Name="BillDateLabel"
+                                   FontSize="11" TextColor="#DDD8FF" HorizontalOptions="End" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- ══ CUSTOMER + QR ═══════════════════════════════════════ -->
+                <Frame BackgroundColor="White" CornerRadius="0" Padding="12,10"
+                       HasShadow="False" BorderColor="#E0E0E0" Margin="0">
+                    <Grid ColumnDefinitions="*,82">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Bill To:"
+                                   FontSize="10" FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryColor}" />
+                            <Label x:Name="CustomerNameLabel"
+                                   FontSize="15" FontAttributes="Bold"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label x:Name="CustomerLocationLabel"
+                                   FontSize="12" TextColor="{StaticResource TextSecondary}" />
+                            <Label x:Name="CustomerPhoneLabel"
+                                   FontSize="11" TextColor="{StaticResource TextSecondary}" />
+                        </VerticalStackLayout>
+
+                        <!-- QR Code Placeholder -->
+                        <Frame Grid.Column="1"
+                               WidthRequest="76" HeightRequest="76"
+                               CornerRadius="6" BackgroundColor="White"
+                               BorderColor="{StaticResource PrimaryColor}"
+                               Padding="5" HasShadow="False"
+                               HorizontalOptions="End" VerticalOptions="Start">
+                            <VerticalStackLayout Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                                <!-- QR pattern using small boxes -->
+                                <Grid ColumnDefinitions="8,2,8,2,8,2,8,2,8" RowDefinitions="8,2,8,2,8,2,8"
+                                      HorizontalOptions="Center">
+                                    <!-- Top-left finder pattern -->
+                                    <BoxView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Grid.RowSpan="1" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="0" Grid.Column="0" Grid.RowSpan="5" Grid.ColumnSpan="1" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="5" Grid.RowSpan="1" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="0" Grid.Column="4" Grid.RowSpan="5" Grid.ColumnSpan="1" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="2" Grid.Column="2" Color="#5B4FCF" />
+                                    <!-- Top-right finder -->
+                                    <BoxView Grid.Row="0" Grid.Column="4" Grid.ColumnSpan="5" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="0" Grid.Column="8" Grid.RowSpan="5" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="4" Grid.Column="4" Grid.ColumnSpan="5" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="2" Grid.Column="6" Color="#5B4FCF" />
+                                    <!-- Data dots -->
+                                    <BoxView Grid.Row="2" Grid.Column="4" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="6" Grid.Column="0" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="6" Grid.Column="2" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="6" Grid.Column="6" Color="#5B4FCF" />
+                                    <BoxView Grid.Row="6" Grid.Column="8" Color="#5B4FCF" />
+                                </Grid>
+                                <Label x:Name="QrUpiLabel"
+                                       FontSize="7" TextColor="{StaticResource PrimaryColor}"
+                                       HorizontalOptions="Center" LineBreakMode="CharacterWrap"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </Grid>
+                </Frame>
+
+                <!-- ══ MEASUREMENTS TABLE (built in code-behind) ═══════════ -->
+                <!-- HorizontalScrollView allows wide table to scroll on phone -->
+                <Frame BackgroundColor="White" CornerRadius="0" Padding="0"
+                       HasShadow="False" BorderColor="#E0E0E0" Margin="0">
+                    <VerticalStackLayout>
+                        <ScrollView Orientation="Horizontal">
+                            <VerticalStackLayout x:Name="TableContainer" Spacing="0" />
+                        </ScrollView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══ EXTRA CHARGES TABLE ════════════════════════════════ -->
+                <Frame x:Name="ExtraChargesFrame" BackgroundColor="White"
+                       CornerRadius="0" Padding="0" HasShadow="False"
+                       BorderColor="#E0E0E0" Margin="0,1,0,0">
+                    <VerticalStackLayout x:Name="ExtraChargesLayout" Spacing="0" />
+                </Frame>
+
+                <!-- ══ TOTALS ══════════════════════════════════════════════ -->
+                <Frame BackgroundColor="White" CornerRadius="0" Padding="14,10"
+                       HasShadow="False" BorderColor="#E0E0E0" Margin="0,1,0,0">
+                    <VerticalStackLayout Spacing="7">
+                        <Grid ColumnDefinitions="*,130">
+                            <Label Text="Sub Total" FontSize="13"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label Grid.Column="1" x:Name="SubTotalLabel"
+                                   FontSize="13" TextColor="{StaticResource TextPrimary}"
+                                   HorizontalOptions="End" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,130" x:Name="ExtraRow">
+                            <Label Text="Extra Charges" FontSize="13"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label Grid.Column="1" x:Name="ExtraChargesTotalLabel"
+                                   FontSize="13" TextColor="{StaticResource TextPrimary}"
+                                   HorizontalOptions="End" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,130">
+                            <Label x:Name="TaxPercentLabel" FontSize="13"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label Grid.Column="1" x:Name="TaxAmountLabel"
+                                   FontSize="13" TextColor="{StaticResource TextPrimary}"
+                                   HorizontalOptions="End" />
+                        </Grid>
+                        <BoxView HeightRequest="1.5"
+                                 BackgroundColor="{StaticResource PrimaryColor}" />
+                        <Grid ColumnDefinitions="*,130">
+                            <Label Text="GRAND TOTAL"
+                                   FontAttributes="Bold" FontSize="16"
+                                   TextColor="{StaticResource PrimaryColor}" />
+                            <Label Grid.Column="1" x:Name="TotalLabel"
+                                   FontAttributes="Bold" FontSize="18"
+                                   TextColor="{StaticResource PrimaryColor}"
+                                   HorizontalOptions="End" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══ BANK DETAILS + TERMS side-by-side ═════════════════ -->
+                <Frame BackgroundColor="White" CornerRadius="0,0,10,10"
+                       Padding="12,10" HasShadow="False" BorderColor="#E0E0E0"
+                       Margin="0,1,0,0">
+                    <Grid ColumnDefinitions="*,8,*">
+                        <!-- Bank details -->
+                        <VerticalStackLayout Grid.Column="0" Spacing="3">
+                            <Label Text="Bank Details"
+                                   FontAttributes="Bold" FontSize="12"
+                                   TextColor="{StaticResource PrimaryColor}" />
+                            <Label x:Name="BankNameLabel" FontSize="11"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label x:Name="BankAccountLabel" FontSize="11"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label x:Name="BankIfscLabel" FontSize="11"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label x:Name="BankBranchLabel" FontSize="11"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            <Label x:Name="UpiIdLabel" FontSize="11"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </VerticalStackLayout>
+
+                        <BoxView Grid.Column="1" WidthRequest="1"
+                                 BackgroundColor="#E0E0E0" />
+
+                        <!-- Terms -->
+                        <VerticalStackLayout Grid.Column="2" Spacing="3">
+                            <Label Text="Terms &amp; Conditions"
+                                   FontAttributes="Bold" FontSize="12"
+                                   TextColor="{StaticResource PrimaryColor}" />
+                            <Label x:Name="TermsLabel"
+                                   FontSize="10" TextColor="{StaticResource TextSecondary}"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Notes (hidden unless present) -->
+                <Frame x:Name="NotesFrame" BackgroundColor="White" CornerRadius="8"
+                       Padding="12" IsVisible="False" Margin="0,6,0,0">
+                    <VerticalStackLayout>
+                        <Label Text="Notes:" FontAttributes="Bold" FontSize="12"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Label x:Name="NotesLabel" FontSize="13"
+                               TextColor="{StaticResource TextPrimary}" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <BoxView HeightRequest="8" Color="Transparent" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Action buttons -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="12,8">
+            <Button Grid.Column="0" Text="📄 Generate PDF"
+                    Style="{StaticResource PrimaryButton}"
+                    Clicked="OnGeneratePdfClicked" />
+            <Button Grid.Column="1" Text="📤 Share"
+                    Style="{StaticResource OutlineButton}"
+                    Clicked="OnShareClicked" />
+        </Grid>
+
+        <!-- Loading overlay -->
+        <Grid Grid.RowSpan="2" BackgroundColor="#CC000000"
+              x:Name="LoadingOverlay" IsVisible="False">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" />
+                <Label Text="Generating PDF…" TextColor="White"
+                       FontSize="16" FontAttributes="Bold" />
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+</ContentPage>

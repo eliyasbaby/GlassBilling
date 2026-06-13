@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.NewBillStep3Page"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    Title="Enter Measurements">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#6A1FCA" Offset="0" />
+                <GradientStop Color="#3B47D4" Offset="1" />
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <!-- Thickness title bar -->
+        <VerticalStackLayout Grid.Row="0" Padding="16,12" BackgroundColor="#FFFFFF22">
+            <Label FontSize="16" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Measurements for: " />
+                        <Span Text="{Binding CurrentEntry.ThicknessType.Name}" FontAttributes="Bold" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+            <Label HorizontalOptions="Center" FontSize="12" TextColor="#DDD8FF">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Step " />
+                        <Span Text="{Binding CurrentThicknessIndex, StringFormat='{0}'}" />
+                        <Span Text=" of " />
+                        <Span Text="{Binding BillItemEntries.Count, StringFormat='{0}'}" />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+        </VerticalStackLayout>
+
+        <!-- Measurements card -->
+        <ScrollView Grid.Row="1" Margin="12,8">
+            <Frame BackgroundColor="White" CornerRadius="16" Padding="14" HasShadow="True">
+                <VerticalStackLayout Spacing="8">
+
+                    <!-- Glass description -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Glass Description:" FontAttributes="Bold" FontSize="13" TextColor="#212121" />
+                        <Border BackgroundColor="White" Stroke="#CCCCCC" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8" Padding="8,0">
+                            <Entry Text="{Binding CurrentEntry.GlassDescription, Mode=TwoWay}"
+                                   Placeholder="e.g. Toughened Plain Glass"
+                                   FontSize="13" TextColor="#212121" BackgroundColor="White"
+                                   HeightRequest="42" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Cutting allowance + Shape in one row -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Cutting Allowance:" FontAttributes="Bold" FontSize="13" TextColor="#212121" />
+                            <Border BackgroundColor="White" Stroke="#CCCCCC" StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 8" Padding="8,0">
+                                <Entry Text="{Binding CurrentEntry.CuttingAllowance, Mode=TwoWay}"
+                                       Keyboard="Numeric" Placeholder="0"
+                                       FontSize="13" TextColor="#212121" BackgroundColor="White"
+                                       HeightRequest="42" />
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                            <Label Text="Shape:" FontAttributes="Bold" FontSize="13" TextColor="#212121" />
+                            <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False" BackgroundColor="White">
+                                <Picker x:Name="ShapePicker"
+                                        SelectedItem="{Binding CurrentEntry.Shape, Mode=TwoWay}"
+                                        BackgroundColor="White" TextColor="#212121"
+                                        HeightRequest="40">
+                                    <Picker.Items>
+                                        <x:String>Block</x:String>
+                                        <x:String>L Shape</x:String>
+                                        <x:String>U Shape</x:String>
+                                        <x:String>T Shape</x:String>
+                                        <x:String>Circle</x:String>
+                                        <x:String>Other</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </Frame>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Unit selector -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Unit:" FontAttributes="Bold" FontSize="13" TextColor="#212121" />
+                        <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False" BackgroundColor="White">
+                            <Picker
+                                x:Name="UnitPicker"
+                                SelectedIndexChanged="OnUnitChanged"
+                                BackgroundColor="White"
+                                TextColor="#212121"
+                                HeightRequest="44">
+                                <Picker.Items>
+                                    <x:String>mm</x:String>
+                                    <x:String>cm</x:String>
+                                    <x:String>inch</x:String>
+                                </Picker.Items>
+                            </Picker>
+                        </Frame>
+                    </VerticalStackLayout>
+
+                    <!-- Column headers -->
+                    <Grid ColumnDefinitions="28,*,*,52,36" BackgroundColor="{StaticResource PrimaryColor}" Padding="4,7">
+                        <Label Grid.Column="0" Text="#"      FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
+                        <Label Grid.Column="1" Text="Length" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
+                        <Label Grid.Column="2" Text="Width"  FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
+                        <Label Grid.Column="3" Text="Qty"    FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
+                        <Label Grid.Column="4" Text=""       FontSize="11" />
+                    </Grid>
+
+                    <!-- Rows via BindableLayout (no CollectionView touch issues) -->
+                    <VerticalStackLayout
+                        BindableLayout.ItemsSource="{Binding CurrentEntry.Rows}"
+                        Spacing="2">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MeasurementEntryRow">
+                                <Grid ColumnDefinitions="28,*,*,52,36" Padding="2,3" ColumnSpacing="4">
+                                    <Label
+                                        Grid.Column="0"
+                                        Text="{Binding RowNumber}"
+                                        FontSize="12"
+                                        TextColor="#9E9E9E"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center" />
+                                    <Border Grid.Column="1"
+                                            BackgroundColor="White" Stroke="#CCCCCC"
+                                            StrokeThickness="1" StrokeShape="RoundRectangle 6"
+                                            Padding="4,0">
+                                        <Entry Text="{Binding Length, Mode=TwoWay}"
+                                               Keyboard="Numeric" Placeholder="0"
+                                               FontSize="13" TextColor="#212121"
+                                               BackgroundColor="White" HeightRequest="38" />
+                                    </Border>
+                                    <Border Grid.Column="2"
+                                            BackgroundColor="White" Stroke="#CCCCCC"
+                                            StrokeThickness="1" StrokeShape="RoundRectangle 6"
+                                            Padding="4,0">
+                                        <Entry Text="{Binding Width, Mode=TwoWay}"
+                                               Keyboard="Numeric" Placeholder="0"
+                                               FontSize="13" TextColor="#212121"
+                                               BackgroundColor="White" HeightRequest="38" />
+                                    </Border>
+                                    <Border Grid.Column="3"
+                                            BackgroundColor="White" Stroke="#CCCCCC"
+                                            StrokeThickness="1" StrokeShape="RoundRectangle 6"
+                                            Padding="2,0">
+                                        <Entry Text="{Binding Quantity, Mode=TwoWay}"
+                                               Keyboard="Numeric" Placeholder="1"
+                                               FontSize="13" TextColor="#212121"
+                                               BackgroundColor="White" HeightRequest="38" />
+                                    </Border>
+                                    <Button
+                                        Grid.Column="4"
+                                        Text="✕"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#E53935"
+                                        FontSize="15"
+                                        HeightRequest="36"
+                                        WidthRequest="36"
+                                        Padding="0"
+                                        CommandParameter="{Binding .}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:NewBillViewModel}}, Path=RemoveRowCommand}" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Frame>
+        </ScrollView>
+
+        <!-- Bottom action buttons -->
+        <VerticalStackLayout Grid.Row="2" Padding="12,4,12,16" Spacing="8">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button
+                    Grid.Column="0"
+                    Text="+ Add Row"
+                    BackgroundColor="#EDE9FF"
+                    TextColor="{StaticResource PrimaryColor}"
+                    FontAttributes="Bold"
+                    CornerRadius="8"
+                    HeightRequest="44"
+                    Command="{Binding AddMeasurementRowCommand}" />
+                <Button
+                    Grid.Column="1"
+                    Text="− Remove Row"
+                    BackgroundColor="#FCE4EC"
+                    TextColor="#E53935"
+                    FontAttributes="Bold"
+                    CornerRadius="8"
+                    HeightRequest="44"
+                    Command="{Binding RemoveLastRowCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button
+                    Grid.Column="0"
+                    Text="← Back"
+                    BackgroundColor="Transparent"
+                    TextColor="White"
+                    BorderColor="White"
+                    BorderWidth="1.5"
+                    CornerRadius="8"
+                    HeightRequest="48"
+                    Command="{Binding PreviousThicknessCommand}" />
+                <Button
+                    Grid.Column="1"
+                    x:Name="NextBtn"
+                    Text="Next →"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding NextThicknessOrFinishCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Loading overlay -->
+        <Grid Grid.RowSpan="3" BackgroundColor="#80000000" IsVisible="{Binding IsBusy}">
+            <ActivityIndicator IsRunning="True" Color="White" HorizontalOptions="Center" VerticalOptions="Center" />
+        </Grid>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.NewBillStep1Page"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    Title="New Bill — Step 1 of 3">
+
+    <Grid RowDefinitions="*" BackgroundColor="Transparent">
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#6A1FCA" Offset="0" />
+                <GradientStop Color="#3B47D4" Offset="1" />
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Frame
+            BackgroundColor="White"
+            CornerRadius="20"
+            Padding="24"
+            Margin="20"
+            VerticalOptions="Center"
+            HasShadow="True">
+            <VerticalStackLayout Spacing="12">
+
+                <Label
+                    Text="Select Customer:"
+                    FontSize="15"
+                    FontAttributes="Bold"
+                    TextColor="#212121" />
+
+                <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False">
+                    <Picker
+                        x:Name="CustomerPicker"
+                        ItemsSource="{Binding Customers}"
+                        ItemDisplayBinding="{Binding DisplayName}"
+                        SelectedItem="{Binding SelectedCustomer}"
+                        Title="— Select Customer —"
+                        Style="{StaticResource FormPicker}" />
+                </Frame>
+
+                <Label
+                    Text="Number of Thickness Types:"
+                    FontSize="15"
+                    FontAttributes="Bold"
+                    TextColor="#212121"
+                    Margin="0,8,0,0" />
+
+                <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False">
+                    <Entry
+                        Text="{Binding NumberOfThicknessTypes}"
+                        Keyboard="Numeric"
+                        Placeholder="e.g. 3"
+                        Style="{StaticResource FormEntry}"
+                        Margin="0" />
+                </Frame>
+
+                <Button
+                    Text="Next →"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding GoToStep2Command}"
+                    Margin="0,12,0,0" />
+
+            </VerticalStackLayout>
+        </Frame>
+
+        <ActivityIndicator
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            Color="White"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

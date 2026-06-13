@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    xmlns:models="clr-namespace:GlassBilling.Models"
+    Title="Settings">
+
+    <Grid>
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <!-- Company Info -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Company Information" Style="{StaticResource SectionHeader}" />
+
+                        <Label Text="Company Name" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding CompanyName}" Placeholder="Your Company Name" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Address" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding CompanyAddress}" Placeholder="Full address" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Phone" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding CompanyPhone}" Placeholder="+91 XXXXX XXXXX" Keyboard="Telephone" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Email" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding CompanyEmail}" Placeholder="email@example.com" Keyboard="Email" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Default Tax (%)" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding DefaultTax}" Placeholder="0" Keyboard="Numeric" Style="{StaticResource FormEntry}" />
+
+                        <Button Text="Save Company Info" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCompanyInfoCommand}" Margin="0,8,0,0" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Bank Details -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Bank Details" Style="{StaticResource SectionHeader}" />
+
+                        <Label Text="Bank Name" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding BankName}" Placeholder="e.g. State Bank of India" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Account Number" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding BankAccount}" Placeholder="XXXXXXXXXX" Keyboard="Numeric" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="IFSC Code" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding BankIfsc}" Placeholder="e.g. SBIN0001234" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="Branch" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding BankBranch}" Placeholder="Branch name" Style="{StaticResource FormEntry}" />
+
+                        <Label Text="UPI ID" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding UpiId}" Placeholder="name@upi" Style="{StaticResource FormEntry}" />
+
+                        <Button Text="Save Bank Details" Style="{StaticResource PrimaryButton}" Command="{Binding SaveBankDetailsCommand}" Margin="0,8,0,0" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Terms & Conditions -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Terms &amp; Conditions" Style="{StaticResource SectionHeader}" />
+                        <Editor Text="{Binding TermsConditions}" Placeholder="Enter terms &amp; conditions shown on invoices..."
+                                HeightRequest="120" FontSize="13" BackgroundColor="#FAFAFA" />
+                        <Button Text="Save Terms" Style="{StaticResource PrimaryButton}" Command="{Binding SaveTermsCommand}" Margin="0,8,0,0" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Thickness Types / Pricing -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Glass Thickness &amp; Pricing" Style="{StaticResource SectionHeader}" />
+                            <Button
+                                Grid.Column="1"
+                                Text="+ Add"
+                                Style="{StaticResource OutlineButton}"
+                                HeightRequest="36"
+                                Padding="12,0"
+                                Command="{Binding AddThicknessTypeCommand}" />
+                        </Grid>
+
+                        <!-- Header row -->
+                        <Grid ColumnDefinitions="*,120,70,70" BackgroundColor="#EDE9FF" Padding="8,4">
+                            <Label Grid.Column="0" Text="Thickness" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" />
+                            <Label Grid.Column="1" Text="Price/sq.ft" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                            <Label Grid.Column="2" Text="Edit" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                            <Label Grid.Column="3" Text="Active" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding ThicknessTypes}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ThicknessType">
+                                    <Grid ColumnDefinitions="*,120,70,70" Padding="8,6">
+                                        <Label Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="14" VerticalOptions="Center" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding PricePerSqFt, StringFormat='₹{0:N2}'}"
+                                               FontSize="13" TextColor="#757575" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Button
+                                            Grid.Column="2"
+                                            Text="Edit"
+                                            BackgroundColor="{StaticResource PrimaryColor}"
+                                            TextColor="White"
+                                            HeightRequest="34"
+                                            CornerRadius="6"
+                                            Padding="8,0"
+                                            FontSize="12"
+                                            CommandParameter="{Binding .}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=EditThicknessCommand}" />
+                                        <Switch
+                                            Grid.Column="3"
+                                            IsToggled="{Binding IsActive}"
+                                            OnColor="{StaticResource PrimaryColor}"
+                                            HorizontalOptions="Center"
+                                            IsEnabled="False" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Backup & Restore -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Backup &amp; Restore" Style="{StaticResource SectionHeader}" />
+                        <Label Text="Backup creates a .db3 file you can store anywhere to keep data safe." FontSize="13" TextColor="#757575" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button
+                                Grid.Column="0"
+                                Text="💾 Backup"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding BackupDatabaseCommand}" />
+                            <Button
+                                Grid.Column="1"
+                                Text="📂 Restore"
+                                Style="{StaticResource OutlineButton}"
+                                Command="{Binding RestoreDatabaseCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Edit thickness overlay -->
+        <Grid BackgroundColor="#80000000" IsVisible="{Binding IsEditingThickness}">
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="16"
+                Padding="20"
+                Margin="20"
+                VerticalOptions="Center">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Edit Thickness Pricing" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
+
+                    <Label Text="Thickness Name" Style="{StaticResource FormLabel}" />
+                    <Entry Text="{Binding EditName}" Style="{StaticResource FormEntry}" />
+
+                    <Label Text="Price per sq.ft (₹)" Style="{StaticResource FormLabel}" />
+                    <Entry Text="{Binding EditPrice}" Keyboard="Numeric" Style="{StaticResource FormEntry}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
+                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelThicknessEditCommand}" />
+                        <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveThicknessCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+        <!-- Loading -->
+        <ActivityIndicator
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            Color="{StaticResource PrimaryColor}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

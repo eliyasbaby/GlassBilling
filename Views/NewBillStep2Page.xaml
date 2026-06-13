@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.NewBillStep2Page"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    Title="New Bill — Step 2 of 3">
+
+    <Grid BackgroundColor="Transparent">
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#6A1FCA" Offset="0" />
+                <GradientStop Color="#3B47D4" Offset="1" />
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <ScrollView Margin="20">
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="20"
+                Padding="24"
+                HasShadow="True">
+                <VerticalStackLayout Spacing="12">
+
+                    <Label
+                        Text="Select Thickness Types"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{StaticResource PrimaryColor}"
+                        HorizontalOptions="Center" />
+
+                    <!-- BindableLayout avoids the Picker tap bug inside CollectionView -->
+                    <VerticalStackLayout x:Name="ThicknessContainer" Spacing="12"
+                        BindableLayout.ItemsSource="{Binding ThicknessSelections}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ThicknessTypeSelection">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label FontSize="14" TextColor="#212121">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="Thickness " />
+                                                <Span Text="{Binding Index}" FontAttributes="Bold" />
+                                                <Span Text=":" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                    <Border Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="White"
+                                            StrokeShape="RoundRectangle 8" Padding="8,0">
+                                        <Picker
+                                            ItemsSource="{Binding AvailableTypes}"
+                                            ItemDisplayBinding="{Binding Name}"
+                                            SelectedItem="{Binding SelectedType, Mode=TwoWay}"
+                                            Title="— Select thickness —"
+                                            TextColor="#212121"
+                                            TitleColor="#757575"
+                                            BackgroundColor="White"
+                                            HeightRequest="48" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+
+                    <Button
+                        Text="Submit →"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding GoToStep3Command}"
+                        Margin="0,12,0,0" />
+
+                </VerticalStackLayout>
+            </Frame>
+        </ScrollView>
+    </Grid>
+</ContentPage>

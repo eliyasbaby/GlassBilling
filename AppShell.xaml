@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="GlassBilling.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:GlassBilling.Views"
+    Shell.FlyoutBehavior="Flyout"
+    Title="Glass Billing">
+
+    <Shell.FlyoutHeader>
+        <Grid BackgroundColor="#5B4FCF" Padding="20" HeightRequest="120">
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label Text="🪟 Glass Billing" FontSize="22" FontAttributes="Bold" TextColor="White" />
+                <Label Text="Billing Management System" FontSize="13" TextColor="#DDD8FF" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <FlyoutItem Title="Home">
+        <ShellContent x:Name="HomeContent" Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Customers">
+        <ShellContent x:Name="CustomersContent" Route="CustomersPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Bill History">
+        <ShellContent x:Name="BillHistoryContent" Route="BillHistoryPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Settings">
+        <ShellContent x:Name="SettingsContent" Route="SettingsPage" />
+    </FlyoutItem>
+
+</Shell>

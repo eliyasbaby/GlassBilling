@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.BillHistoryPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    xmlns:models="clr-namespace:GlassBilling.Models"
+    Title="Bill History">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <SearchBar
+            Grid.Row="0"
+            Placeholder="Search by bill number or customer..."
+            Text="{Binding SearchText}"
+            Margin="12,8" />
+
+        <CollectionView
+            Grid.Row="1"
+            ItemsSource="{Binding Bills}"
+            Margin="12,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Bill">
+                    <Frame Style="{StaticResource CardFrame}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="3">
+                                <Label Text="{Binding BillNumber}" FontAttributes="Bold" FontSize="15"
+                                       TextColor="{StaticResource PrimaryColor}" />
+                                <Label Text="{Binding Customer.Name}" FontSize="14" TextColor="#212121" />
+                                <Label Text="{Binding Customer.Location}" FontSize="12" TextColor="#9E9E9E" />
+                                <Label Text="{Binding FormattedDate}" FontSize="12" TextColor="#757575" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="6">
+                                <Label
+                                    Text="{Binding FormattedTotal}"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    HorizontalOptions="End" />
+                                <Button
+                                    Text="View"
+                                    Style="{StaticResource PrimaryButton}"
+                                    HeightRequest="36"
+                                    Padding="14,0"
+                                    FontSize="13"
+                                    CommandParameter="{Binding .}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=ViewBillCommand}" />
+                                <Button
+                                    Text="Delete"
+                                    Style="{StaticResource DangerButton}"
+                                    HeightRequest="32"
+                                    Padding="10,0"
+                                    FontSize="12"
+                                    CommandParameter="{Binding .}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=DeleteBillCommand}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Margin="0,80">
+                    <Label Text="No bills yet" FontSize="16" TextColor="#9E9E9E" HorizontalOptions="Center" />
+                    <Label Text="Create a new bill from the home screen" FontSize="13" TextColor="#BDBDBD" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <ActivityIndicator
+            Grid.RowSpan="2"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            Color="{StaticResource PrimaryColor}"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Glass Billing">
+
+    <ScrollView>
+        <Grid RowDefinitions="280,*" RowSpacing="0">
+
+            <!-- Purple gradient header -->
+            <Grid Grid.Row="0">
+                <Grid.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#6A1FCA" Offset="0" />
+                        <GradientStop Color="#3B47D4" Offset="1" />
+                    </LinearGradientBrush>
+                </Grid.Background>
+
+                <VerticalStackLayout
+                    Padding="24,40,24,24"
+                    Spacing="8"
+                    VerticalOptions="Center">
+                    <Label Text="🪟" FontSize="40" HorizontalOptions="Center" />
+                    <Label
+                        Text="Glass Billing"
+                        FontSize="28"
+                        FontAttributes="Bold"
+                        TextColor="White"
+                        HorizontalOptions="Center" />
+                    <Label
+                        Text="Billing Management System"
+                        FontSize="14"
+                        TextColor="#DDD8FF"
+                        HorizontalOptions="Center" />
+
+                    <!-- Stats row -->
+                    <HorizontalStackLayout Spacing="16" HorizontalOptions="Center" Margin="0,16,0,0">
+                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
+                            <VerticalStackLayout HorizontalOptions="Center">
+                                <Label x:Name="BillsCount" Text="0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                                <Label Text="Bills" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </Frame>
+                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
+                            <VerticalStackLayout HorizontalOptions="Center">
+                                <Label x:Name="CustomersCount" Text="0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                                <Label Text="Customers" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </Frame>
+                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
+                            <VerticalStackLayout HorizontalOptions="Center">
+                                <Label x:Name="Revenue" Text="₹0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                                <Label Text="Revenue" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Action grid -->
+            <VerticalStackLayout Grid.Row="1" Padding="20" Spacing="12">
+
+                <!-- New Bill -->
+                <Button
+                    Text="+ New Bill"
+                    Style="{StaticResource PrimaryButton}"
+                    Clicked="OnNewBillClicked"
+                    HeightRequest="56"
+                    FontSize="17" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Button
+                        Grid.Column="0"
+                        Text="👥 Customers"
+                        Style="{StaticResource OutlineButton}"
+                        Clicked="OnCustomersClicked" />
+                    <Button
+                        Grid.Column="1"
+                        Text="📄 Bill History"
+                        Style="{StaticResource OutlineButton}"
+                        Clicked="OnBillHistoryClicked" />
+                </Grid>
+
+                <Button
+                    Text="⚙️ Settings"
+                    Style="{StaticResource OutlineButton}"
+                    Clicked="OnSettingsClicked" />
+
+            </VerticalStackLayout>
+
+        </Grid>
+    </ScrollView>
+
+</ContentPage>
