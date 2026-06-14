@@ -18,7 +18,7 @@
 
                 <!-- ══ COMPANY HEADER ══════════════════════════════════════ -->
                 <Frame BackgroundColor="{StaticResource PrimaryColor}"
-                       CornerRadius="10,10,0,0" Padding="14,12" HasShadow="False"
+                        Padding="14,12" HasShadow="False"
                        Margin="0">
                     <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
                         <!-- Left: company -->
@@ -159,7 +159,7 @@
                 </Frame>
 
                 <!-- ══ BANK DETAILS + TERMS side-by-side ═════════════════ -->
-                <Frame BackgroundColor="White" CornerRadius="0,0,10,10"
+                <Frame BackgroundColor="White"
                        Padding="12,10" HasShadow="False" BorderColor="#E0E0E0"
                        Margin="0,1,0,0">
                     <Grid ColumnDefinitions="*,8,*">

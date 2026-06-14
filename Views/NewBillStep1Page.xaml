@@ -29,15 +29,12 @@
                     FontAttributes="Bold"
                     TextColor="#212121" />
 
-                <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False">
                     <Picker
                         x:Name="CustomerPicker"
                         ItemsSource="{Binding Customers}"
                         ItemDisplayBinding="{Binding DisplayName}"
                         SelectedItem="{Binding SelectedCustomer}"
-                        Title="— Select Customer —"
-                        Style="{StaticResource FormPicker}" />
-                </Frame>
+                      />
 
                 <Label
                     Text="Number of Thickness Types:"
@@ -46,14 +43,12 @@
                     TextColor="#212121"
                     Margin="0,8,0,0" />
 
-                <Frame Padding="4" CornerRadius="8" BorderColor="#E0E0E0" HasShadow="False">
                     <Entry
                         Text="{Binding NumberOfThicknessTypes}"
                         Keyboard="Numeric"
                         Placeholder="e.g. 3"
                         Style="{StaticResource FormEntry}"
                         Margin="0" />
-                </Frame>
 
                 <Button
                     Text="Next →"

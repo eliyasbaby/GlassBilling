@@ -44,18 +44,15 @@
                                             </FormattedString>
                                         </Label.FormattedText>
                                     </Label>
-                                    <Border Stroke="#E0E0E0" StrokeThickness="1" BackgroundColor="White"
-                                            StrokeShape="RoundRectangle 8" Padding="8,0">
+                                    
                                         <Picker
                                             ItemsSource="{Binding AvailableTypes}"
                                             ItemDisplayBinding="{Binding Name}"
                                             SelectedItem="{Binding SelectedType, Mode=TwoWay}"
-                                            Title="— Select thickness —"
                                             TextColor="#212121"
                                             TitleColor="#757575"
                                             BackgroundColor="White"
                                             HeightRequest="48" />
-                                    </Border>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
