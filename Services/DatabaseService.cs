@@ -15,13 +15,13 @@ public class DatabaseService
 
         _db = new SQLiteAsyncConnection(DbPath,
             SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.SharedCache);
-
         await _db.CreateTableAsync<Customer>();
         await _db.CreateTableAsync<ThicknessType>();
         await _db.CreateTableAsync<Bill>();
         await _db.CreateTableAsync<BillItem>();
         await _db.CreateTableAsync<MeasurementRow>();
         await _db.CreateTableAsync<ExtraCharge>();
+        await _db.CreateTableAsync<GlassBilling.Models.Settings>();
 
         await SeedDefaultDataAsync();
     }
@@ -174,5 +174,39 @@ public class DatabaseService
     public async Task CloseAsync()
     {
         if (_db is not null) { await _db.CloseAsync(); _db = null; }
+    }
+
+    // Settings
+    public async Task<GlassBilling.Models.Settings> GetSettingsAsync()
+    {
+        await InitAsync();
+        var s = await _db!.Table<GlassBilling.Models.Settings>().FirstOrDefaultAsync();
+        if (s is not null) return s;
+
+        // create default from Preferences if available
+        var def = new GlassBilling.Models.Settings
+        {
+            CompanyName = Preferences.Get("company_name", "Glass Works Pvt. Ltd."),
+            CompanyAddress = Preferences.Get("company_address", "123, Glass Street, Industrial Area, City – 600001"),
+            CompanyPhone = Preferences.Get("company_phone", "+91 98765 43210"),
+            CompanyEmail = Preferences.Get("company_email", "info@glassworks.com"),
+            DefaultTax = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18,
+            BankName = Preferences.Get("bank_name", "State Bank of India"),
+            BankAccount = Preferences.Get("bank_account", "1234567890"),
+            BankIfsc = Preferences.Get("bank_ifsc", "SBIN0001234"),
+            BankBranch = Preferences.Get("bank_branch", ""),
+            UpiId = Preferences.Get("upi_id", ""),
+            TermsConditions = Preferences.Get("terms_conditions", "")
+        };
+
+        await _db.InsertAsync(def);
+        return def;
+    }
+
+    public async Task<int> SaveSettingsAsync(GlassBilling.Models.Settings s)
+    {
+        await InitAsync();
+        if (s.Id == 0) return await _db!.InsertAsync(s);
+        return await _db!.UpdateAsync(s);
     }
 }

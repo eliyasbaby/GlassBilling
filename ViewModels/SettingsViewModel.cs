@@ -39,29 +39,46 @@ public partial class SettingsViewModel : BaseViewModel
         _db     = db;
         _backup = backup;
         Title   = "Settings";
-        LoadCompanyInfo();
+        Task.Run(async () => await LoadCompanyInfoAsync());
     }
-
-    private void LoadCompanyInfo()
+    private async Task LoadCompanyInfoAsync()
     {
-        CompanyName    = Preferences.Get("company_name",    "Glass Works Pvt. Ltd.");
-        CompanyAddress = Preferences.Get("company_address", "123, Glass Street, Industrial Area, City – 600001");
-        CompanyPhone   = Preferences.Get("company_phone",   "+91 98765 43210");
-        CompanyEmail   = Preferences.Get("company_email",   "info@glassworks.com");
-        DefaultTax     = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+        try
+        {
+            var s = await _db.GetSettingsAsync();
+            CompanyName = s.CompanyName; CompanyAddress = s.CompanyAddress;
+            CompanyPhone = s.CompanyPhone; CompanyEmail = s.CompanyEmail;
+            DefaultTax = s.DefaultTax;
 
-        BankName    = Preferences.Get("bank_name",    "State Bank of India");
-        BankAccount = Preferences.Get("bank_account", "1234567890");
-        BankIfsc    = Preferences.Get("bank_ifsc",    "SBIN0001234");
-        BankBranch  = Preferences.Get("bank_branch",  "Anna Nagar Main Branch");
-        UpiId       = Preferences.Get("upi_id",       "glassworks@sbi");
+            BankName = s.BankName; BankAccount = s.BankAccount; BankIfsc = s.BankIfsc;
+            BankBranch = s.BankBranch; UpiId = s.UpiId;
 
-        TermsConditions = Preferences.Get("terms_conditions",
-            "1. Goods once sold will not be taken back or exchanged.\n" +
-            "2. All disputes are subject to local jurisdiction only.\n" +
-            "3. Payment due within 30 days of invoice date.\n" +
-            "4. Breakage during transport is not our responsibility.\n" +
-            "5. Please check material carefully at the time of delivery.");
+            TermsConditions = string.IsNullOrWhiteSpace(s.TermsConditions)
+                ? Preferences.Get("terms_conditions", "1. Goods once sold will not be taken back or exchanged.\n2. All disputes are subject to local jurisdiction only.\n3. Payment due within 30 days of invoice date.\n4. Breakage during transport is not our responsibility.\n5. Please check material carefully at the time of delivery.")
+                : s.TermsConditions;
+        }
+        catch
+        {
+            // fallback to preferences
+            CompanyName    = Preferences.Get("company_name",    "Glass Works Pvt. Ltd.");
+            CompanyAddress = Preferences.Get("company_address", "123, Glass Street, Industrial Area, City – 600001");
+            CompanyPhone   = Preferences.Get("company_phone",   "+91 98765 43210");
+            CompanyEmail   = Preferences.Get("company_email",   "info@glassworks.com");
+            DefaultTax     = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+
+            BankName    = Preferences.Get("bank_name",    "State Bank of India");
+            BankAccount = Preferences.Get("bank_account", "1234567890");
+            BankIfsc    = Preferences.Get("bank_ifsc",    "SBIN0001234");
+            BankBranch  = Preferences.Get("bank_branch",  "Anna Nagar Main Branch");
+            UpiId       = Preferences.Get("upi_id",       "glassworks@sbi");
+
+            TermsConditions = Preferences.Get("terms_conditions",
+                "1. Goods once sold will not be taken back or exchanged.\n" +
+                "2. All disputes are subject to local jurisdiction only.\n" +
+                "3. Payment due within 30 days of invoice date.\n" +
+                "4. Breakage during transport is not our responsibility.\n" +
+                "5. Please check material carefully at the time of delivery.");
+        }
     }
 
     [RelayCommand]
@@ -73,32 +90,53 @@ public partial class SettingsViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void SaveCompanyInfo()
+    private async Task SaveCompanyInfoAsync()
     {
         Preferences.Set("company_name",    CompanyName.Trim());
         Preferences.Set("company_address", CompanyAddress.Trim());
         Preferences.Set("company_phone",   CompanyPhone.Trim());
         Preferences.Set("company_email",   CompanyEmail.Trim());
         Preferences.Set("default_tax",     DefaultTax.ToString());
-        Shell.Current.DisplayAlert("Saved", "Company info saved.", "OK");
+
+        var s = await _db.GetSettingsAsync();
+        s.CompanyName = CompanyName.Trim();
+        s.CompanyAddress = CompanyAddress.Trim();
+        s.CompanyPhone = CompanyPhone.Trim();
+        s.CompanyEmail = CompanyEmail.Trim();
+        s.DefaultTax = DefaultTax;
+        await _db.SaveSettingsAsync(s);
+
+        await Shell.Current.DisplayAlert("Saved", "Company info saved.", "OK");
     }
 
     [RelayCommand]
-    private void SaveBankDetails()
+    private async Task SaveBankDetailsAsync()
     {
         Preferences.Set("bank_name",    BankName.Trim());
         Preferences.Set("bank_account", BankAccount.Trim());
         Preferences.Set("bank_ifsc",    BankIfsc.Trim());
         Preferences.Set("bank_branch",  BankBranch.Trim());
         Preferences.Set("upi_id",       UpiId.Trim());
-        Shell.Current.DisplayAlert("Saved", "Bank details saved.", "OK");
+
+        var s = await _db.GetSettingsAsync();
+        s.BankName = BankName.Trim();
+        s.BankAccount = BankAccount.Trim();
+        s.BankIfsc = BankIfsc.Trim();
+        s.BankBranch = BankBranch.Trim();
+        s.UpiId = UpiId.Trim();
+        await _db.SaveSettingsAsync(s);
+
+        await Shell.Current.DisplayAlert("Saved", "Bank details saved.", "OK");
     }
 
     [RelayCommand]
-    private void SaveTerms()
+    private async Task SaveTermsAsync()
     {
         Preferences.Set("terms_conditions", TermsConditions);
-        Shell.Current.DisplayAlert("Saved", "Terms & Conditions saved.", "OK");
+        var s = await _db.GetSettingsAsync();
+        s.TermsConditions = TermsConditions;
+        await _db.SaveSettingsAsync(s);
+        await Shell.Current.DisplayAlert("Saved", "Terms & Conditions saved.", "OK");
     }
 
     [RelayCommand]

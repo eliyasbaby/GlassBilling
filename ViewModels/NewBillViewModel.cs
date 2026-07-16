@@ -69,7 +69,77 @@ public partial class NewBillViewModel : BaseViewModel
         foreach (var c in list) Customers.Add(c);
         SelectedCustomer = Customers.FirstOrDefault();
         NumberOfThicknessTypes = 1;
-        TaxPercent = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+        try
+        {
+            var s = await _db.GetSettingsAsync();
+            TaxPercent = s.DefaultTax;
+        }
+        catch
+        {
+            TaxPercent = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+        }
+    }
+
+    [RelayCommand]
+    public async Task LoadSinglePageAsync()
+    {
+        ThicknessSelections.Clear();
+        BillItemEntries.Clear();
+        ResetExtraCharges();
+        Notes = string.Empty;
+
+        var customers = await _db.GetCustomersAsync();
+        Customers.Clear();
+        foreach (var c in customers) Customers.Add(c);
+        SelectedCustomer = Customers.FirstOrDefault();
+
+        var types = await _db.GetThicknessTypesAsync();
+        AvailableThicknessTypes.Clear();
+        foreach (var t in types) AvailableThicknessTypes.Add(t);
+
+        NumberOfThicknessTypes = Math.Clamp(NumberOfThicknessTypes, 1, 20);
+        BuildBillItemEntries();
+
+        try
+        {
+            var s = await _db.GetSettingsAsync();
+            TaxPercent = s.DefaultTax;
+        }
+        catch
+        {
+            TaxPercent = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+        }
+    }
+
+    [RelayCommand]
+    public void RebuildBillItemEntries()
+    {
+        NumberOfThicknessTypes = Math.Clamp(NumberOfThicknessTypes, 1, 20);
+        BuildBillItemEntries();
+    }
+
+    private void BuildBillItemEntries()
+    {
+        BillItemEntries.Clear();
+
+        for (int i = 0; i < NumberOfThicknessTypes; i++)
+        {
+            var entry = new BillItemEntry
+            {
+                ThicknessType = AvailableThicknessTypes.FirstOrDefault() ?? new ThicknessType(),
+                MeasurementUnit = "mm",
+                CuttingAllowance = 0,
+                Shape = "Block"
+            };
+
+            foreach (var type in AvailableThicknessTypes)
+                entry.AvailableTypes.Add(type);
+
+            entry.AddRow();
+            BillItemEntries.Add(entry);
+        }
+
+        OnPropertyChanged(nameof(BillItemEntries));
     }
 
     [RelayCommand]
@@ -140,6 +210,8 @@ public partial class NewBillViewModel : BaseViewModel
     [RelayCommand] private void AddMeasurementRow()    => CurrentEntry?.AddRow();
     [RelayCommand] private void RemoveLastRow()        => CurrentEntry?.RemoveLastRow();
     [RelayCommand] private void RemoveRow(MeasurementEntryRow row) => CurrentEntry?.RemoveRow(row);
+    [RelayCommand] private void AddRowToEntry(BillItemEntry entry) => entry.AddRow();
+    [RelayCommand] private void RemoveLastRowFromEntry(BillItemEntry entry) => entry.RemoveLastRow();
 
     [RelayCommand]
     private async Task NextThicknessOrFinishAsync()
@@ -195,6 +267,26 @@ public partial class NewBillViewModel : BaseViewModel
     private async Task GenerateBillAsync()
     {
         if (IsBusy) return;
+
+        if (SelectedCustomer is null)
+        {
+            await Shell.Current.DisplayAlert("Validation", "Please select a customer.", "OK");
+            return;
+        }
+
+        if (BillItemEntries.Count == 0)
+        {
+            await Shell.Current.DisplayAlert("Validation", "Please add at least one thickness section.", "OK");
+            return;
+        }
+
+        if (BillItemEntries.Any(e => !e.HasValidRows))
+        {
+            await Shell.Current.DisplayAlert("Validation",
+                "Each thickness section needs at least one measurement with Length and Width greater than 0.", "OK");
+            return;
+        }
+
         IsBusy = true;
         try
         {
@@ -276,15 +368,17 @@ public partial class ThicknessTypeSelection : ObservableObject
 
 public partial class BillItemEntry : ObservableObject
 {
-    public ThicknessType ThicknessType  { get; set; } = new();
+    [ObservableProperty] private ThicknessType _thicknessType = new();
     [ObservableProperty] private string _measurementUnit  = "mm";
     [ObservableProperty] private double _cuttingAllowance = 0;
     [ObservableProperty] private string _shape            = "Block";
     [ObservableProperty] private string _glassDescription = "Toughened Plain Glass";
 
+    public ObservableCollection<ThicknessType> AvailableTypes { get; } = new();
     public ObservableCollection<MeasurementEntryRow> Rows { get; } = new();
 
     public bool HasValidRows => Rows.Any(r => r.Length > 0 && r.Width > 0);
+    public double CalculatedTotal => CalcTotal();
 
     public double CalcTotal()
     {
@@ -298,9 +392,45 @@ public partial class BillItemEntry : ObservableObject
         return area * ThicknessType.PricePerSqFt;
     }
 
-    public void AddRow()        => Rows.Add(new MeasurementEntryRow { RowNumber = Rows.Count + 1 });
-    public void RemoveLastRow() { if (Rows.Count > 1) Rows.RemoveAt(Rows.Count - 1); }
-    public void RemoveRow(MeasurementEntryRow r) { if (Rows.Count > 1) Rows.Remove(r); }
+    partial void OnThicknessTypeChanged(ThicknessType value) => NotifyTotalChanged();
+    partial void OnMeasurementUnitChanged(string value) => NotifyTotalChanged();
+    partial void OnCuttingAllowanceChanged(double value) => NotifyTotalChanged();
+
+    public void AddRow()
+    {
+        var row = new MeasurementEntryRow { RowNumber = Rows.Count + 1 };
+        row.PropertyChanged += (_, _) => NotifyTotalChanged();
+        Rows.Add(row);
+        NotifyTotalChanged();
+    }
+
+    public void RemoveLastRow()
+    {
+        if (Rows.Count <= 1) return;
+        Rows.RemoveAt(Rows.Count - 1);
+        RenumberRows();
+        NotifyTotalChanged();
+    }
+
+    public void RemoveRow(MeasurementEntryRow r)
+    {
+        if (Rows.Count <= 1) return;
+        Rows.Remove(r);
+        RenumberRows();
+        NotifyTotalChanged();
+    }
+
+    private void RenumberRows()
+    {
+        for (int i = 0; i < Rows.Count; i++)
+            Rows[i].RowNumber = i + 1;
+    }
+
+    private void NotifyTotalChanged()
+    {
+        OnPropertyChanged(nameof(CalculatedTotal));
+        OnPropertyChanged(nameof(HasValidRows));
+    }
 }
 
 public partial class MeasurementEntryRow : ObservableObject

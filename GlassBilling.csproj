@@ -8,11 +8,18 @@
     <SingleProject>true</SingleProject>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationTitle>Glass Billing</ApplicationTitle>
     <ApplicationId>com.glassbilling.app</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>glassbilling.keystore</AndroidSigningKeyStore>
-    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsPackageType Condition="'$(Configuration)' == 'Debug'">None</WindowsPackageType>
+    <WindowsPackageType Condition="'$(Configuration)' != 'Debug'">MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="'$(Configuration)' == 'Debug'">true</WindowsAppSDKSelfContained>
+    <AppxPackageSigningEnabled Condition="'$(Configuration)' != 'Debug'">true</AppxPackageSigningEnabled>
+    <GenerateAppxPackageOnBuild Condition="'$(Configuration)' != 'Debug'">true</GenerateAppxPackageOnBuild>
+    <PackageCertificateKeyFile Condition="'$(Configuration)' != 'Debug'">GlassBilling.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint Condition="'$(Configuration)' != 'Debug'">F8F9737B4C46991D5F24AA79788B87BAB6822C51</PackageCertificateThumbprint>
   </PropertyGroup>
 
   <!-- App Icon -->
