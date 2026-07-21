@@ -27,7 +27,10 @@
 
                         <Label Text="Email" Style="{StaticResource FormLabel}" />
                         <Entry Text="{Binding CompanyEmail}" Placeholder="email@example.com" Keyboard="Email" Style="{StaticResource FormEntry}" />
-
+    
+                        <Label Text="GSTIN" Style="{StaticResource FormLabel}" />
+                        <Entry Text="{Binding CompanyGstin}" Placeholder="22AAAAA0000A1Z5" Style="{StaticResource FormEntry}" />
+                        
                         <Label Text="Default Tax (%)" Style="{StaticResource FormLabel}" />
                         <Entry Text="{Binding DefaultTax}" Placeholder="0" Keyboard="Numeric" Style="{StaticResource FormEntry}" />
 

@@ -17,6 +17,7 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private string _companyPhone   = string.Empty;
     [ObservableProperty] private string _companyEmail   = string.Empty;
     [ObservableProperty] private double _defaultTax     = 0;
+    [ObservableProperty] private string _companyGstin = string.Empty;
 
     // Bank details
     [ObservableProperty] private string _bankName    = string.Empty;
@@ -47,8 +48,8 @@ public partial class SettingsViewModel : BaseViewModel
         {
             var s = await _db.GetSettingsAsync();
             CompanyName = s.CompanyName; CompanyAddress = s.CompanyAddress;
-            CompanyPhone = s.CompanyPhone; CompanyEmail = s.CompanyEmail;
-            DefaultTax = s.DefaultTax;
+            CompanyPhone = s.CompanyPhone; CompanyEmail = s.CompanyEmail; 
+            CompanyGstin = s.CompanyGstin;DefaultTax = s.DefaultTax;
 
             BankName = s.BankName; BankAccount = s.BankAccount; BankIfsc = s.BankIfsc;
             BankBranch = s.BankBranch; UpiId = s.UpiId;

@@ -283,43 +283,46 @@ public class PdfService
 
     private static async Task<byte[]?> LoadImageBytesAsync(string fileName)
     {
-        try
+        var packageCandidates = new[]
         {
-            // Try opening directly from app package (works for some platforms)
+            fileName,
+            Path.Combine("Resources", "Images", fileName),
+            Path.Combine("Images", fileName),
+            Path.Combine("Resources", fileName)
+        };
+
+        foreach (var packagePath in packageCandidates)
+        {
             try
             {
-                await using var packageStream = await FileSystem.OpenAppPackageFileAsync(fileName);
+                await using var packageStream = await FileSystem.OpenAppPackageFileAsync(packagePath);
                 using var ms = new MemoryStream();
                 await packageStream.CopyToAsync(ms);
                 return ms.ToArray();
             }
-            catch { }
-
-            // Try common resource subpath used by MAUI
-            try
+            catch
             {
-                await using var packageStream = await FileSystem.OpenAppPackageFileAsync(Path.Combine("Resources", "Images", fileName));
-                using var ms2 = new MemoryStream();
-                await packageStream.CopyToAsync(ms2);
-                return ms2.ToArray();
+                // try the next candidate
             }
-            catch { }
-        }
-        catch
-        {
-            // fall through to disk candidates below
         }
 
-        var candidates = new[]
+        var diskCandidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "Resources", "Images", fileName),
-            Path.Combine(Environment.CurrentDirectory, "Resources", "Images", fileName),
             Path.Combine(AppContext.BaseDirectory, fileName),
-            Path.Combine(Environment.CurrentDirectory, fileName)
+            Path.Combine(AppContext.BaseDirectory, "Resources", "Images", fileName),
+            Path.Combine(AppContext.BaseDirectory, "Images", fileName),
+            Path.Combine(Environment.CurrentDirectory, fileName),
+            Path.Combine(Environment.CurrentDirectory, "Resources", "Images", fileName),
+            Path.Combine(Environment.CurrentDirectory, "Images", fileName)
         };
 
-        var path = candidates.FirstOrDefault(File.Exists);
-        return path is null ? null : await File.ReadAllBytesAsync(path);
+        foreach (var path in diskCandidates)
+        {
+            if (File.Exists(path))
+                return await File.ReadAllBytesAsync(path);
+        }
+
+        return null;
     }
 
     private static void ComposeInvoiceHeader(QuestPDFContainer container, string company, string address, string phone, byte[]? logoBytes)

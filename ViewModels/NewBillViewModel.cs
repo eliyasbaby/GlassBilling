@@ -11,6 +11,7 @@ public partial class NewBillViewModel : BaseViewModel
 {
     private readonly DatabaseService _db;
     private readonly PdfService _pdf;
+    private bool _isInitialized;
 
     // ── Step 1 ───────────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<Customer> _customers = new();
@@ -83,31 +84,56 @@ public partial class NewBillViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadSinglePageAsync()
     {
-        ThicknessSelections.Clear();
-        BillItemEntries.Clear();
-        ResetExtraCharges();
-        Notes = string.Empty;
-
         var customers = await _db.GetCustomersAsync();
         Customers.Clear();
         foreach (var c in customers) Customers.Add(c);
-        SelectedCustomer = Customers.FirstOrDefault();
 
         var types = await _db.GetThicknessTypesAsync();
         AvailableThicknessTypes.Clear();
         foreach (var t in types) AvailableThicknessTypes.Add(t);
 
-        NumberOfThicknessTypes = Math.Clamp(NumberOfThicknessTypes, 1, 20);
-        BuildBillItemEntries();
+        if (!_isInitialized)
+        {
+            ThicknessSelections.Clear();
+            BillItemEntries.Clear();
+            ResetExtraCharges();
+            Notes = string.Empty;
+            SelectedCustomer = Customers.FirstOrDefault();
+            NumberOfThicknessTypes = 1;
+            BuildBillItemEntries();
 
-        try
-        {
-            var s = await _db.GetSettingsAsync();
-            TaxPercent = s.DefaultTax;
+            try
+            {
+                var s = await _db.GetSettingsAsync();
+                TaxPercent = s.DefaultTax;
+            }
+            catch
+            {
+                TaxPercent = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+            }
+
+            _isInitialized = true;
+            return;
         }
-        catch
+
+        if (SelectedCustomer is null)
+            SelectedCustomer = Customers.FirstOrDefault();
+
+        if (BillItemEntries.Count == 0)
+            BuildBillItemEntries();
+
+        if (ThicknessSelections.Count == 0 && NumberOfThicknessTypes > 0)
         {
-            TaxPercent = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
+            ThicknessSelections.Clear();
+            for (int i = 0; i < NumberOfThicknessTypes; i++)
+            {
+                ThicknessSelections.Add(new ThicknessTypeSelection
+                {
+                    Index = i + 1,
+                    AvailableTypes = AvailableThicknessTypes,
+                    SelectedType = AvailableThicknessTypes.FirstOrDefault()
+                });
+            }
         }
     }
 

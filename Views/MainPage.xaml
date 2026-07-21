@@ -3,93 +3,329 @@
     x:Class="GlassBilling.Views.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Glass Billing">
+    BackgroundColor="#F3F6F9">
 
     <ScrollView>
-        <Grid RowDefinitions="280,*" RowSpacing="0">
+        <Grid Padding="24" RowDefinitions="Auto,Auto,*" RowSpacing="24">
 
-            <!-- Purple gradient header -->
-            <Grid Grid.Row="0">
-                <Grid.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#6A1FCA" Offset="0" />
-                        <GradientStop Color="#3B47D4" Offset="1" />
-                    </LinearGradientBrush>
-                </Grid.Background>
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#FAFCFF" Offset="0" />
+                    <GradientStop Color="#EEF3F8" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
 
-                <VerticalStackLayout
-                    Padding="24,40,24,24"
-                    Spacing="8"
-                    VerticalOptions="Center">
-                    <Label Text="🪟" FontSize="40" HorizontalOptions="Center" />
-                    <Label
-                        Text="Glass Billing"
-                        FontSize="28"
-                        FontAttributes="Bold"
-                        TextColor="White"
-                        HorizontalOptions="Center" />
-                    <Label
-                        Text="Billing Management System"
-                        FontSize="14"
-                        TextColor="#DDD8FF"
-                        HorizontalOptions="Center" />
-
-                    <!-- Stats row -->
-                    <HorizontalStackLayout Spacing="16" HorizontalOptions="Center" Margin="0,16,0,0">
-                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
-                            <VerticalStackLayout HorizontalOptions="Center">
-                                <Label x:Name="BillsCount" Text="0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
-                                <Label Text="Bills" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-                        </Frame>
-                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
-                            <VerticalStackLayout HorizontalOptions="Center">
-                                <Label x:Name="CustomersCount" Text="0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
-                                <Label Text="Customers" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-                        </Frame>
-                        <Frame BackgroundColor="#FFFFFF22" BorderColor="Transparent" CornerRadius="10" Padding="16,10">
-                            <VerticalStackLayout HorizontalOptions="Center">
-                                <Label x:Name="Revenue" Text="₹0" FontSize="22" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
-                                <Label Text="Revenue" FontSize="11" TextColor="#DDD8FF" HorizontalOptions="Center" />
-                            </VerticalStackLayout>
-                        </Frame>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                <Label
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Text="TECHNO GLASS TEMPERING"
+                    FontSize="20"
+                    FontAttributes="Bold"
+                    TextColor="#189AD3"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
             </Grid>
 
-            <!-- Action grid -->
-            <VerticalStackLayout Grid.Row="1" Padding="20" Spacing="12">
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="*,*,*"
+                  ColumnSpacing="18"
+                  HorizontalOptions="Center"
+                  MaximumWidthRequest="980">
 
-                <!-- New Bill -->
-                <Button
-                    Text="+ New Bill"
-                    Style="{StaticResource PrimaryButton}"
-                    Clicked="OnNewBillClicked"
-                    HeightRequest="56"
-                    FontSize="17" />
+                <Frame
+                    Grid.Column="0"
+                    BackgroundColor="#2196F3"
+                    BorderColor="#1877C9"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="22"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Grid RowDefinitions="*,Auto" ColumnDefinitions="Auto,*">
+                        <Label
+                            Grid.RowSpan="2"
+                            Text="&#xE8A5;"
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="54"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            x:Name="BillsCount"
+                            Text="0"
+                            FontSize="36"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Text="Bills"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
 
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <Button
-                        Grid.Column="0"
-                        Text="👥 Customers"
-                        Style="{StaticResource OutlineButton}"
-                        Clicked="OnCustomersClicked" />
-                    <Button
-                        Grid.Column="1"
-                        Text="📄 Bill History"
-                        Style="{StaticResource OutlineButton}"
-                        Clicked="OnBillHistoryClicked" />
-                </Grid>
+                <Frame
+                    Grid.Column="1"
+                    BackgroundColor="#16A05D"
+                    BorderColor="#0E7B46"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="22"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Grid RowDefinitions="*,Auto" ColumnDefinitions="Auto,*">
+                        <Label
+                            Grid.RowSpan="2"
+                            Text="&#xE716;"
+                            FontFamily="Segoe MDL2 Assets"
+                            FontSize="54"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            x:Name="CustomersCount"
+                            Text="0"
+                            FontSize="36"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Text="Customers"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
 
-                <Button
-                    Text="⚙️ Settings"
-                    Style="{StaticResource OutlineButton}"
-                    Clicked="OnSettingsClicked" />
+                <Frame
+                    Grid.Column="2"
+                    BackgroundColor="#F0A202"
+                    BorderColor="#C78200"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="22"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Grid RowDefinitions="*,Auto" ColumnDefinitions="Auto,*">
+                        <Label
+                            Grid.RowSpan="2"
+                            Text="₹"
+                            FontSize="54"
+                            TextColor="White"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            x:Name="Revenue"
+                            Text="Rs 0"
+                            FontSize="30"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Text="Revenue"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="White"
+                            HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+            </Grid>
 
-            </VerticalStackLayout>
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,*,*"
+                  RowDefinitions="170,170"
+                  ColumnSpacing="18"
+                  RowSpacing="18"
+                  HorizontalOptions="Center"
+                  MaximumWidthRequest="980">
 
+                <Frame
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    BackgroundColor="#2D9BF0"
+                    BorderColor="#1777C7"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNewBillClicked" />
+                    </Frame.GestureRecognizers>
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE710;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="New Bill"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+
+                <Frame
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    BackgroundColor="#97CF24"
+                    BorderColor="#74A914"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCustomersClicked" />
+                    </Frame.GestureRecognizers>
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE716;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="Customers"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+
+                <Frame
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    BackgroundColor="#D91A45"
+                    BorderColor="#B41136"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnBillHistoryClicked" />
+                    </Frame.GestureRecognizers>
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE9D5;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="Bill History"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+
+                <Frame
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    BackgroundColor="#8E24AA"
+                    BorderColor="#6F1788"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSettingsClicked" />
+                    </Frame.GestureRecognizers>
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE713;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="Settings"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+
+                <Frame
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    BackgroundColor="#00897B"
+                    BorderColor="#00695C"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE9D2;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="Dashboard"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+
+                <Frame
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    BackgroundColor="#EC5AA6"
+                    BorderColor="#C83F86"
+                    CornerRadius="4"
+                    HasShadow="True"
+                    Padding="18"
+                    WidthRequest="300"
+                    HeightRequest="170"
+                    MinimumHeightRequest="170">
+                    <Grid RowDefinitions="*,Auto">
+                        <Label Text="&#xE74E;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="66"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                        <Label Grid.Row="1"
+                               Text="Reports"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalTextAlignment="End" />
+                    </Grid>
+                </Frame>
+            </Grid>
         </Grid>
     </ScrollView>
-
 </ContentPage>

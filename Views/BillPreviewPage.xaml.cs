@@ -15,7 +15,7 @@ public partial class BillPreviewPage : ContentPage
     private static readonly Color HeaderFill = Color.FromArgb("#EEEEEE");
     private static readonly Color TextDark = Colors.Black;
 
-    private static readonly double[] ColW = { 78, 79, 79, 79, 79, 79, 79, 79, 79, 79 };
+    private static readonly double[] ColW = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
     public Bill? Bill
     {
@@ -40,8 +40,8 @@ public partial class BillPreviewPage : ContentPage
         CompanyAddressLabel.Text = s.CompanyAddress;
         CompanyPhoneLabel.Text = string.IsNullOrWhiteSpace(s.CompanyPhone) ? "" : $"PH: {s.CompanyPhone}";
         OfficePhoneLabel.Text = string.IsNullOrWhiteSpace(s.CompanyPhone) ? "Office:" : $"Office: {s.CompanyPhone}";
-        CompanyEmailLabel.Text = string.IsNullOrWhiteSpace(s.CompanyEmail) ? "E-mail:" : $"E-mail: {s.CompanyEmail}";
-        CompanyGstinLabel.Text = "GSTIN:";
+        CompanyEmailValueLabel.Text = string.IsNullOrWhiteSpace(s.CompanyEmail) ? "E-mail:" : $"E-mail: {s.CompanyEmail}";
+        CompanyGstinValueLabel.Text = string.IsNullOrWhiteSpace(s.CompanyGstin) ? "GSTIN:" : $"GSTIN: {s.CompanyGstin}";
 
         CustomerNameLabel.Text = $"Name: {_bill.Customer?.Name ?? ""}";
         CustomerLocationLabel.Text = $"Location: {_bill.Customer?.Location ?? ""}";
@@ -107,9 +107,12 @@ public partial class BillPreviewPage : ContentPage
     private Grid BuildTableHeader()
     {
         var grid = GridWithColumns();
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
         grid.Add(Cell("Sl No.", 0, 0, 2, true, fill: HeaderFill));
-        grid.Add(Cell("Actual Size", 1, 0, 1, true, 2, HeaderFill));
-        grid.Add(Cell("Charge Size", 3, 0, 1, true, 2, HeaderFill));
+        grid.Add(Cell("Actual size", 1, 0, 1, true, 2, HeaderFill));
+        grid.Add(Cell("Chargeable size", 3, 0, 1, true, 2, HeaderFill));
         grid.Add(Cell("Qty", 5, 0, 2, true, fill: HeaderFill));
         grid.Add(Cell("Chargeable Area", 6, 0, 2, true, fill: HeaderFill));
         grid.Add(Cell("Rate\n(\u20B9/sqft)", 7, 0, 2, true, fill: HeaderFill));
@@ -144,12 +147,8 @@ public partial class BillPreviewPage : ContentPage
     private Grid BuildSubTotalRow(BillItem item)
     {
         var grid = GridWithColumns();
-        grid.Add(Cell("", 0, 0));
-        grid.Add(Cell("", 1, 0));
-        grid.Add(Cell("", 2, 0));
-        grid.Add(Cell("", 3, 0));
-        grid.Add(Cell("", 4, 0));
-        grid.Add(Cell("Totals:", 5, 0, bold: true, align: TextAlignment.End));
+        grid.Add(Cell("Totals:", 0, 0, bold: true, align: TextAlignment.End, columnSpan: 5, fill: HeaderFill));
+        grid.Add(Cell("", 5, 0, fill: HeaderFill));
         grid.Add(Cell(item.TotalChargeAreaSqFt.ToString("N2"), 6, 0));
         grid.Add(Cell("", 7, 0));
         grid.Add(Cell("", 8, 0));
@@ -157,11 +156,24 @@ public partial class BillPreviewPage : ContentPage
         return grid;
     }
 
-    private Grid GridWithColumns() => new()
+    private Grid GridWithColumns()
     {
-        ColumnDefinitions = new ColumnDefinitionCollection(
-            ColW.Select(w => new ColumnDefinition(new GridLength(w))).ToArray())
-    };
+        var tableWidth = GetResponsiveTableWidth();
+        return new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitionCollection(
+                ColW.Select(_ => new ColumnDefinition(new GridLength(1, GridUnitType.Star))).ToArray()),
+            WidthRequest = tableWidth,
+            HorizontalOptions = LayoutOptions.Start
+        };
+    }
+
+    private double GetResponsiveTableWidth()
+    {
+        var displayWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
+        var availableWidth = Math.Max(320, displayWidth - 140);
+        return Math.Min(780, availableWidth);
+    }
 
     private static Label Label(string text, double size, bool bold = false,
         TextAlignment align = TextAlignment.Start) => new()
@@ -184,6 +196,8 @@ public partial class BillPreviewPage : ContentPage
             StrokeThickness = 0.6,
             BackgroundColor = fill ?? Colors.White,
             Padding = new Thickness(5, 3),
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill,
             Content = new Label
             {
                 Text = text,

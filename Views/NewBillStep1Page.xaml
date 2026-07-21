@@ -18,7 +18,7 @@
                                FontAttributes="Bold"
                                TextColor="{StaticResource TextPrimary}" />
 
-                        <Label Text="Customer" Style="{StaticResource FormLabel}" />
+                        <Label Text="Select Customer" Style="{StaticResource FormLabel}" />
                         <Picker ItemsSource="{Binding Customers}"
                                 ItemDisplayBinding="{Binding DisplayName}"
                                 SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
@@ -27,7 +27,7 @@
 
                         <Grid ColumnDefinitions="*,140" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                <Label Text="Thickness Sections" Style="{StaticResource FormLabel}" />
+                                <Label Text="Number of Thickness Types" Style="{StaticResource FormLabel}" />
                                 <Entry Text="{Binding NumberOfThicknessTypes, Mode=TwoWay}"
                                        Keyboard="Numeric"
                                        Placeholder="1"
@@ -51,7 +51,7 @@
                                 <VerticalStackLayout Spacing="10">
                                     <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
                                         <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                            <Label Text="Thickness" Style="{StaticResource FormLabel}" />
+                                            <Label Text="Select Thickness Types" Style="{StaticResource FormLabel}" />
                                             <Picker ItemsSource="{Binding AvailableTypes}"
                                                     ItemDisplayBinding="{Binding Name}"
                                                     SelectedItem="{Binding ThicknessType, Mode=TwoWay}"
@@ -78,7 +78,7 @@
                                         </VerticalStackLayout>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,150,150" ColumnSpacing="10">
+                                    <!-- <Grid ColumnDefinitions="*,150,150" ColumnSpacing="10">
                                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                                             <Label Text="Glass Description" Style="{StaticResource FormLabel}" />
                                             <Entry Text="{Binding GlassDescription, Mode=TwoWay}"
@@ -96,16 +96,16 @@
                                                    TextChanged="OnAnyValueChanged"
                                                    Style="{StaticResource FormEntry}" />
                                         </VerticalStackLayout>
-                                    </Grid>
+                                    </Grid> -->
 
-                                    <Grid ColumnDefinitions="32,*,*,70,42"
+                                    <!-- <Grid ColumnDefinitions="32,*,*,70,42"
                                           BackgroundColor="{StaticResource PrimaryColor}"
                                           Padding="4,7">
                                         <Label Grid.Column="0" Text="#" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
                                         <Label Grid.Column="1" Text="Height" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
                                         <Label Grid.Column="2" Text="Width" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
                                         <Label Grid.Column="3" Text="Qty" FontAttributes="Bold" FontSize="11" HorizontalOptions="Center" TextColor="White" />
-                                    </Grid>
+                                    </Grid> -->
 
                                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rows}" Spacing="2">
                                         <BindableLayout.ItemTemplate>
@@ -120,13 +120,13 @@
                                                     <Entry Grid.Column="1"
                                                            Text="{Binding Length, Mode=TwoWay}"
                                                            Keyboard="Numeric"
-                                                           Placeholder="0"
+                                                           Placeholder="Length"
                                                            Style="{StaticResource FormEntry}"
                                                            TextChanged="OnAnyValueChanged" />
                                                     <Entry Grid.Column="2"
                                                            Text="{Binding Width, Mode=TwoWay}"
                                                            Keyboard="Numeric"
-                                                           Placeholder="0"
+                                                           Placeholder="Width"
                                                            Style="{StaticResource FormEntry}"
                                                            TextChanged="OnAnyValueChanged" />
                                                     <Entry Grid.Column="3"

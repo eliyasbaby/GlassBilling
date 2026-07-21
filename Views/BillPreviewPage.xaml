@@ -13,15 +13,17 @@
 
     <Grid RowDefinitions="*,Auto">
         <ScrollView Grid.Row="0" Orientation="Both">
-            <VerticalStackLayout Padding="12" HorizontalOptions="Center">
+            <VerticalStackLayout Padding="20" HorizontalOptions="Center">
                 <Border
                     BackgroundColor="White"
                     Stroke="#DDDDDD"
                     StrokeThickness="1"
-                    WidthRequest="790"
-                    Padding="0">
-                    <VerticalStackLayout x:Name="InvoiceRoot" Padding="0,14,0,10" Spacing="0">
-                        <Grid ColumnDefinitions="170,*" Padding="0,0,0,6">
+                    Padding="0"
+                    HorizontalOptions="Center"
+                    MaximumWidthRequest="920"
+                    Margin="8,0">
+                    <VerticalStackLayout x:Name="InvoiceRoot" Padding="18,20,18,16" Spacing="10">
+                        <Grid ColumnDefinitions="170,*" Padding="0,0,0,10">
                             <Image
                                 Source="glasslogo.png"
                                 HeightRequest="90"
@@ -49,12 +51,22 @@
                                     FontSize="16"
                                     TextColor="Black"
                                     HorizontalTextAlignment="Center" />
+                                <Label
+                                    x:Name="CompanyEmailLabel"
+                                    FontSize="16"
+                                    TextColor="Black"
+                                    HorizontalTextAlignment="Center" />
+                                <Label
+                                    x:Name="CompanyGstinLabel"
+                                    FontSize="16"
+                                    TextColor="Black"
+                                    HorizontalTextAlignment="Center" />
                             </VerticalStackLayout>
                         </Grid>
 
                         <BoxView HeightRequest="1" Color="#9A9A9A" Margin="0,0,0,0" />
 
-                        <Grid ColumnDefinitions="*,*" Padding="0,2,0,2">
+                        <Grid ColumnDefinitions="*,*" Padding="0,8,0,10">
                             <VerticalStackLayout Spacing="1" Padding="0,0,8,0">
                                 <Label Text="Customer Details" FontAttributes="Bold" FontSize="16" TextColor="Black" />
                                 <Label x:Name="CustomerNameLabel" FontSize="16" TextColor="Black" />
@@ -68,8 +80,8 @@
                                 <Label x:Name="BillDateLabel" FontSize="16" TextColor="Black" />
                                 <Label x:Name="BillNumberLabel" FontSize="16" TextColor="Black" />
                                 <Label x:Name="OfficePhoneLabel" FontSize="16" TextColor="Black" />
-                                <Label x:Name="CompanyEmailLabel" FontSize="16" TextColor="Black" />
-                                <Label x:Name="CompanyGstinLabel" FontSize="16" TextColor="Black" />
+                                <Label x:Name="CompanyEmailValueLabel" FontSize="16" TextColor="Black" />
+                                <Label x:Name="CompanyGstinValueLabel" FontSize="16" TextColor="Black" />
                                 <Label Text="Salesman:" FontSize="16" TextColor="Black" />
                             </VerticalStackLayout>
                         </Grid>
@@ -83,13 +95,13 @@
                             TextColor="Black"
                             TextDecorations="Underline"
                             HorizontalTextAlignment="Center"
-                            Margin="0,1,0,0" />
+                            Margin="0,8,0,8" />
 
                         <BoxView HeightRequest="1" Color="#9A9A9A" />
 
                         <VerticalStackLayout x:Name="TableContainer" Spacing="0" />
 
-                        <Grid ColumnDefinitions="280,1,210,1,*" Padding="0,10,0,0">
+                        <Grid ColumnDefinitions="280,1,210,1,*" Padding="0,14,0,0">
                             <VerticalStackLayout Grid.Column="0" Spacing="0">
                                 <VerticalStackLayout x:Name="BankLayout" Spacing="1" />
                                 <Label
@@ -121,7 +133,7 @@
                         </Grid>
 
                         <Frame x:Name="NotesFrame" BackgroundColor="White" BorderColor="#9A9A9A"
-                               CornerRadius="0" Padding="8" IsVisible="False" Margin="0,8,0,0">
+                               CornerRadius="0" Padding="10" IsVisible="False" Margin="0,12,0,0">
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="Notes:" FontAttributes="Bold" FontSize="12" TextColor="Black" />
                                 <Label x:Name="NotesLabel" FontSize="12" TextColor="Black" />

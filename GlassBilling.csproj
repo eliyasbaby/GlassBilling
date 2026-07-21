@@ -8,6 +8,9 @@
     <SingleProject>true</SingleProject>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
     <ApplicationTitle>Glass Billing</ApplicationTitle>
     <ApplicationId>com.glassbilling.app</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
@@ -27,6 +30,7 @@
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#5B4FCF" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#5B4FCF" BaseSize="128,128" />
     <MauiFont Include="Resources\Fonts\*" />
+    <MauiImage Include="Resources\Images\**\*" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
