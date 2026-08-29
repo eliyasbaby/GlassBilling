@@ -8,8 +8,8 @@
     BackgroundColor="{StaticResource BackgroundColor}">
 
     <Grid Padding="30,0">
-        <ScrollView HorizontalOptions="Center" VerticalOptions="Fill">
-            <VerticalStackLayout Padding="0" Spacing="14" WidthRequest="980" MaximumWidthRequest="980" HorizontalOptions="Center">
+        <ScrollView HorizontalOptions="Fill" VerticalOptions="Fill">
+            <VerticalStackLayout Padding="0" Spacing="14" MaximumWidthRequest="980" HorizontalOptions="Fill" WidthRequest="-1">
 
                 <Frame BackgroundColor="White" CornerRadius="12" Padding="16" HasShadow="True">
                     <VerticalStackLayout Spacing="10">

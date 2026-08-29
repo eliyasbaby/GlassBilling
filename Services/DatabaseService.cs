@@ -123,7 +123,18 @@ public class DatabaseService
         }
         else
         {
-            await _db!.UpdateAsync(bill);
+            var existingBill = await _db!.FindAsync<Bill>(bill.Id);
+            if (!string.IsNullOrWhiteSpace(existingBill?.BillNumber))
+                bill.BillNumber = existingBill.BillNumber;
+
+            await _db.UpdateAsync(bill);
+
+            var existingItems = await _db.Table<BillItem>().Where(i => i.BillId == bill.Id).ToListAsync();
+            foreach (var item in existingItems)
+            {
+                await _db.Table<MeasurementRow>().DeleteAsync(m => m.BillItemId == item.Id);
+            }
+            await _db.Table<BillItem>().DeleteAsync(i => i.BillId == bill.Id);
         }
 
         foreach (var item in bill.Items)

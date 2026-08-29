@@ -37,6 +37,8 @@ public partial class NewBillViewModel : BaseViewModel
     [ObservableProperty] private double _taxPercent = 0;
     [ObservableProperty] private double _discountAmount = 0;
     [ObservableProperty] private string _notes = string.Empty;
+    [ObservableProperty] private bool _isEditingBill;
+    [ObservableProperty] private int _editingBillId;
 
 
     public NewBillViewModel(DatabaseService db, PdfService pdf)
@@ -84,14 +86,99 @@ public partial class NewBillViewModel : BaseViewModel
 
     // ── Step 1 ───────────────────────────────────────────────────────────────
 
+    public async Task LoadBillForEditingAsync(Bill bill)
+    {
+        IsEditingBill = true;
+        EditingBillId = bill.Id;
+
+        var allTypes = await _db.GetThicknessTypesAsync(false);
+        AvailableThicknessTypes.Clear();
+        foreach (var type in allTypes) AvailableThicknessTypes.Add(type);
+
+        var customers = await _db.GetCustomersAsync();
+        RefreshCustomers(customers);
+        SelectedCustomer = customers.FirstOrDefault(c => c.Id == bill.CustomerId) ?? Customers.Skip(1).FirstOrDefault();
+
+        Notes = bill.Notes;
+        TaxPercent = bill.TaxPercent;
+        DiscountAmount = bill.DiscountAmount;
+        NumberOfThicknessTypes = Math.Max(1, bill.Items.Count);
+        BillItemEntries.Clear();
+
+        foreach (var item in bill.Items)
+        {
+            var thicknessType = AvailableThicknessTypes.FirstOrDefault(t => t.Id == item.ThicknessTypeId)
+                ?? AvailableThicknessTypes.FirstOrDefault()
+                ?? new ThicknessType
+                {
+                    Id = item.ThicknessTypeId,
+                    Name = item.ThicknessName,
+                    PricePerSqFt = item.PricePerSqFt
+                };
+
+            var entry = new BillItemEntry
+            {
+                ThicknessType = thicknessType,
+                MeasurementUnit = item.MeasurementUnit,
+                CuttingAllowance = item.CuttingAllowance,
+                Shape = item.Shape,
+                GlassDescription = item.GlassDescription
+            };
+
+            foreach (var type in AvailableThicknessTypes)
+                entry.AvailableTypes.Add(type);
+
+            foreach (var row in item.Measurements)
+            {
+                entry.Rows.Add(new MeasurementEntryRow
+                {
+                    RowNumber = row.RowNumber,
+                    Length = row.Length,
+                    Width = row.Width,
+                    Quantity = row.Quantity
+                });
+            }
+
+            if (entry.Rows.Count == 0)
+                entry.AddRow();
+
+            BillItemEntries.Add(entry);
+        }
+
+        ExtraCharges.Clear();
+        foreach (var charge in bill.ExtraCharges)
+        {
+            ExtraCharges.Add(new ExtraChargeEntry
+            {
+                Name = charge.Name,
+                Amount = charge.Amount,
+                ColumnIndex = ExtraCharges.Count % 4,
+                RowIndex = ExtraCharges.Count / 4,
+                TabIndex = ExtraCharges.Count * 2
+            });
+        }
+
+        if (ExtraCharges.Count == 0)
+            ResetExtraCharges();
+        else
+            RefreshExtraChargeLayoutIndexes();
+
+        IsCustomerFormVisible = false;
+        OnPropertyChanged(nameof(BillItemEntries));
+    }
+
     [RelayCommand]
     public async Task LoadStep1Async()
     {
+        IsEditingBill = false;
+        EditingBillId = 0;
+
         // Reset all state for a fresh bill
         ThicknessSelections.Clear();
         BillItemEntries.Clear();
         ResetExtraCharges();
         Notes = string.Empty;
+        DiscountAmount = 0;
 
         var list = await _db.GetCustomersAsync();
         RefreshCustomers(list);
@@ -112,12 +199,27 @@ public partial class NewBillViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadSinglePageAsync()
     {
-        var customers = await _db.GetCustomersAsync();
-        RefreshCustomers(customers);
+        if (IsEditingBill)
+        {
+            var customers = await _db.GetCustomersAsync();
+            RefreshCustomers(customers);
 
-        var types = await _db.GetThicknessTypesAsync();
+            var types = await _db.GetThicknessTypesAsync();
+            AvailableThicknessTypes.Clear();
+            foreach (var t in types) AvailableThicknessTypes.Add(t);
+
+            if (SelectedCustomer is null)
+                SelectedCustomer = Customers.FirstOrDefault();
+
+            return;
+        }
+
+        var customersList = await _db.GetCustomersAsync();
+        RefreshCustomers(customersList);
+
+        var typesList = await _db.GetThicknessTypesAsync();
         AvailableThicknessTypes.Clear();
-        foreach (var t in types) AvailableThicknessTypes.Add(t);
+        foreach (var t in typesList) AvailableThicknessTypes.Add(t);
 
         if (!_isInitialized)
         {
@@ -412,14 +514,17 @@ public partial class NewBillViewModel : BaseViewModel
         IsBusy = true;
         try
         {
+            var existing = EditingBillId > 0 ? await _db.GetBillWithDetailsAsync(EditingBillId) : null;
             var bill = new Bill
             {
+                Id              = EditingBillId,
                 CustomerId      = SelectedCustomer!.Id,
                 Customer        = SelectedCustomer,
                 BillDate        = DateTime.Now,
                 TaxPercent      = TaxPercent,
                 DiscountAmount  = DiscountAmount,
-                Notes           = Notes
+                Notes           = Notes,
+                BillNumber      = existing?.BillNumber ?? string.Empty
             };
 
             foreach (var entry in BillItemEntries)
@@ -482,6 +587,9 @@ public partial class NewBillViewModel : BaseViewModel
 
             int billId = await _db.SaveBillAsync(bill);
             var saved  = await _db.GetBillWithDetailsAsync(billId);
+
+            IsEditingBill = false;
+            EditingBillId = 0;
 
             var navParams = new Dictionary<string, object> { { "Bill", saved! } };
             await Shell.Current.GoToAsync(nameof(BillPreviewPage), navParams);

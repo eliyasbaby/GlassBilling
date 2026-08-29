@@ -11,14 +11,16 @@ public partial class BillHistoryViewModel : BaseViewModel
 {
     private readonly DatabaseService _db;
     private readonly PdfService _pdf;
+    private readonly NewBillViewModel _newBillVm;
 
     [ObservableProperty] private ObservableCollection<Bill> _bills = new();
     [ObservableProperty] private string _searchText = string.Empty;
 
-    public BillHistoryViewModel(DatabaseService db, PdfService pdf)
+    public BillHistoryViewModel(DatabaseService db, PdfService pdf, NewBillViewModel newBillVm)
     {
         _db  = db;
         _pdf = pdf;
+        _newBillVm = newBillVm;
         Title = "Bill History";
     }
 
@@ -43,6 +45,16 @@ public partial class BillHistoryViewModel : BaseViewModel
         if (full is null) return;
         var navParams = new Dictionary<string, object> { { "Bill", full } };
         await Shell.Current.GoToAsync(nameof(BillPreviewPage), navParams);
+    }
+
+    [RelayCommand]
+    private async Task EditBillAsync(Bill bill)
+    {
+        var full = await _db.GetBillWithDetailsAsync(bill.Id);
+        if (full is null) return;
+
+        await _newBillVm.LoadBillForEditingAsync(full);
+        await Shell.Current.GoToAsync(nameof(NewBillStep1Page));
     }
 
     [RelayCommand]
