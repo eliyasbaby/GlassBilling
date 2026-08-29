@@ -7,9 +7,9 @@
     Title="New Bill"
     BackgroundColor="{StaticResource BackgroundColor}">
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="16" Spacing="14">
+    <Grid Padding="30,0">
+        <ScrollView HorizontalOptions="Center" VerticalOptions="Fill">
+            <VerticalStackLayout Padding="0" Spacing="14" WidthRequest="980" MaximumWidthRequest="980" HorizontalOptions="Center">
 
                 <Frame BackgroundColor="White" CornerRadius="12" Padding="16" HasShadow="True">
                     <VerticalStackLayout Spacing="10">
@@ -243,6 +243,21 @@
                                    TextChanged="OnAnyValueChanged" />
                         </Grid>
 
+                        <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Discount" Style="{StaticResource FormLabel}" />
+                                <Label Text="Optional amount or %"
+                                       FontSize="11"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </VerticalStackLayout>
+                            <Entry Grid.Column="1"
+                                   Text="{Binding DiscountAmount, Mode=TwoWay}"
+                                   Keyboard="Numeric"
+                                   HorizontalTextAlignment="End"
+                                   Style="{StaticResource FormEntry}"
+                                   TextChanged="OnAnyValueChanged" />
+                        </Grid>
+
                         <Label Text="Notes" Style="{StaticResource FormLabel}" />
                         <Editor Text="{Binding Notes, Mode=TwoWay}"
                                 Placeholder="Any notes for this invoice..."
@@ -279,17 +294,18 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <Grid Padding="0,8,0,0" HorizontalOptions="Center">
+                    <Button Text="Generate Bill"
+                            Style="{StaticResource PrimaryButton}"
+                            Padding="18,0"
+                            MinimumWidthRequest="180"
+                            Clicked="OnGenerateBillClicked" />
+                </Grid>
+
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" Padding="16,10,16,18" BackgroundColor="{StaticResource BackgroundColor}">
-            <Button Text="Generate Bill"
-                    Style="{StaticResource PrimaryButton}"
-                    HeightRequest="52"
-                    Clicked="OnGenerateBillClicked" />
-        </Grid>
-
-        <Grid Grid.RowSpan="2" BackgroundColor="#CC000000"
+        <Grid BackgroundColor="#CC000000"
               x:Name="LoadingOverlay" IsVisible="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                 <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" />

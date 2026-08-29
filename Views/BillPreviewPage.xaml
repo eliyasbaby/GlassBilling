@@ -11,9 +11,9 @@
         <ToolbarItem Text="Share" Clicked="OnShareClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView Grid.Row="0" Orientation="Both">
-            <VerticalStackLayout Padding="20" HorizontalOptions="Center">
+    <Grid>
+        <ScrollView Orientation="Both">
+            <VerticalStackLayout Padding="20" HorizontalOptions="Center" Spacing="12">
                 <Border
                     BackgroundColor="White"
                     Stroke="#DDDDDD"
@@ -141,21 +141,25 @@
                         </Frame>
 
                         <BoxView HeightRequest="1" Color="#9A9A9A" Margin="0,10,0,0" />
+
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="12" Padding="0,8,0,0" HorizontalOptions="Center">
+                            <Button Grid.Column="0" Text="Generate PDF"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Padding="18,0"
+                                    MinimumWidthRequest="160"
+                                    Clicked="OnGeneratePdfClicked" />
+                            <Button Grid.Column="1" Text="Share"
+                                    Style="{StaticResource OutlineButton}"
+                                    Padding="18,0"
+                                    MinimumWidthRequest="120"
+                                    Clicked="OnShareClicked" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10" Padding="12,8" BackgroundColor="#F4F4F4">
-            <Button Grid.Column="0" Text="Generate PDF"
-                    Style="{StaticResource PrimaryButton}"
-                    Clicked="OnGeneratePdfClicked" />
-            <Button Grid.Column="1" Text="Share"
-                    Style="{StaticResource OutlineButton}"
-                    Clicked="OnShareClicked" />
-        </Grid>
-
-        <Grid Grid.RowSpan="2" BackgroundColor="#CC000000"
+        <Grid BackgroundColor="#CC000000"
               x:Name="LoadingOverlay" IsVisible="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                 <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" />
