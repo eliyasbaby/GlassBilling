@@ -1,3 +1,4 @@
+using GlassBilling.Models;
 using GlassBilling.ViewModels;
 
 namespace GlassBilling.Views;
@@ -6,6 +7,7 @@ public partial class NewBillStep1Page : ContentPage
 {
     private readonly NewBillViewModel _vm;
     private readonly HashSet<BillItemEntry> _hookedEntries = new();
+    private Customer? _previousCustomerSelection;
 
     public NewBillStep1Page(NewBillViewModel vm)
     {
@@ -18,6 +20,7 @@ public partial class NewBillStep1Page : ContentPage
     {
         base.OnAppearing();
         await _vm.LoadSinglePageAsync();
+        _previousCustomerSelection = _vm.SelectedCustomer;
         HookEntryChanges();
         RefreshTotals();
         _vm.PropertyChanged += OnVmPropertyChanged;
@@ -37,6 +40,25 @@ public partial class NewBillStep1Page : ContentPage
         {
             HookEntryChanges();
             RefreshTotals();
+        }
+    }
+
+    private void OnCustomerPickerSelectionChanged(object sender, EventArgs e)
+    {
+        if (_vm.SelectedCustomer is null)
+            return;
+
+        if (_vm.SelectedCustomer.Id == -1)
+        {
+            var picker = (Picker)sender;
+            picker.SelectedItem = _previousCustomerSelection;
+            _vm.SelectedCustomer = _previousCustomerSelection;
+            _vm.OpenCustomerForm();
+            _previousCustomerSelection = _vm.SelectedCustomer;
+        }
+        else
+        {
+            _previousCustomerSelection = _vm.SelectedCustomer;
         }
     }
 

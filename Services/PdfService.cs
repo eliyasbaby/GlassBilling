@@ -50,7 +50,9 @@ public class PdfService
     private async Task<string> GenerateHtmlAsync(Bill bill)
     {
         string fileName = $"Bill_{bill.BillNumber?.Replace("-", "_")}_{DateTime.Now:yyyyMMdd}.html";
-        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        string directory = GetWritableDirectory();
+        Directory.CreateDirectory(directory);
+        string filePath = Path.Combine(directory, fileName);
         var s = await _db.GetSettingsAsync();
         await File.WriteAllTextAsync(filePath, BuildHtml(bill, s));
         return filePath;
@@ -242,7 +244,9 @@ public class PdfService
         var upiBytes = await LoadImageBytesAsync("upi.jpeg");
 
         string fileName = $"Bill_{bill.BillNumber?.Replace("-", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
-        string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+        string directory = GetWritableDirectory();
+        Directory.CreateDirectory(directory);
+        string filePath = Path.Combine(directory, fileName);
 
         await Task.Run(() =>
         {
@@ -281,6 +285,12 @@ public class PdfService
         return filePath;
     }
 
+    private static string GetWritableDirectory()
+    {
+        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GlassBilling", "Bills");
+        return path;
+    }
+
     private static async Task<byte[]?> LoadImageBytesAsync(string fileName)
     {
         var packageCandidates = new[]
@@ -300,7 +310,15 @@ public class PdfService
                 await packageStream.CopyToAsync(ms);
                 return ms.ToArray();
             }
-            catch
+            catch (FileNotFoundException)
+            {
+                // try the next candidate
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // try the next candidate
+            }
+            catch (IOException)
             {
                 // try the next candidate
             }
@@ -313,13 +331,26 @@ public class PdfService
             Path.Combine(AppContext.BaseDirectory, "Images", fileName),
             Path.Combine(Environment.CurrentDirectory, fileName),
             Path.Combine(Environment.CurrentDirectory, "Resources", "Images", fileName),
-            Path.Combine(Environment.CurrentDirectory, "Images", fileName)
+            Path.Combine(Environment.CurrentDirectory, "Images", fileName),
+            Path.Combine("Resources", "Images", fileName),
+            Path.Combine("Resources", fileName)
         };
 
         foreach (var path in diskCandidates)
         {
-            if (File.Exists(path))
-                return await File.ReadAllBytesAsync(path);
+            try
+            {
+                if (File.Exists(path))
+                    return await File.ReadAllBytesAsync(path);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // ignore and continue
+            }
+            catch (FileNotFoundException)
+            {
+                // ignore and continue
+            }
         }
 
         return null;

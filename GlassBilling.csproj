@@ -13,8 +13,8 @@
     <Optimize>false</Optimize>
     <ApplicationTitle>Glass Billing</ApplicationTitle>
     <ApplicationId>com.glassbilling.app</ApplicationId>
-    <ApplicationVersion>1</ApplicationVersion>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>3</ApplicationVersion>
+    <ApplicationDisplayVersion>1.2.0</ApplicationDisplayVersion>
     <AndroidSigningKeyStore>glassbilling.keystore</AndroidSigningKeyStore>
     <WindowsPackageType Condition="'$(Configuration)' == 'Debug'">None</WindowsPackageType>
     <WindowsPackageType Condition="'$(Configuration)' != 'Debug'">MSIX</WindowsPackageType>

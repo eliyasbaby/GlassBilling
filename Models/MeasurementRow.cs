@@ -42,6 +42,17 @@ public class MeasurementRow
     public static double CalcAreaSqFt(double length, double width, string unit, int qty = 1)
         => ToFeet(length, unit) * ToFeet(width, unit) * qty;
 
+    // Calculate the chargeable area in sq.ft. by adding 2 inches to both
+    // length and width to account for wastage before converting to feet.
+    public static double CalcChargeableAreaSqFt(double length, double width, string unit, int qty = 1)
+    {
+        const double extraInInches = 2.0; // 2 inch wasteage per dimension
+        // convert extra inches to feet
+        double extraFeet = extraInInches / 12.0;
+
+        return (ToFeet(length, unit) + extraFeet) * (ToFeet(width, unit) + extraFeet) * qty;
+    }
+
     [Ignore] public string DisplayArea       => $"{AreaInSqFt:N4}";
     [Ignore] public string DisplayChargeArea => $"{ChargeAreaSqFt:N4}";
 }

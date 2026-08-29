@@ -17,6 +17,11 @@ public partial class NewBillViewModel : BaseViewModel
     [ObservableProperty] private ObservableCollection<Customer> _customers = new();
     [ObservableProperty] private Customer? _selectedCustomer;
     [ObservableProperty] private int _numberOfThicknessTypes = 1;
+    [ObservableProperty] private bool _isCustomerFormVisible;
+    [ObservableProperty] private string _newCustomerName = string.Empty;
+    [ObservableProperty] private string _newCustomerLocation = string.Empty;
+    [ObservableProperty] private string _newCustomerPhone = string.Empty;
+    [ObservableProperty] private string _newCustomerAddress = string.Empty;
 
     // ── Step 2 ───────────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<ThicknessType> _availableThicknessTypes = new();
@@ -31,6 +36,8 @@ public partial class NewBillViewModel : BaseViewModel
     [ObservableProperty] private ObservableCollection<ExtraChargeEntry> _extraCharges = new();
     [ObservableProperty] private double _taxPercent = 0;
     [ObservableProperty] private string _notes = string.Empty;
+    [ObservableProperty] private double _discount = 0;
+
 
     public NewBillViewModel(DatabaseService db, PdfService pdf)
     {
@@ -50,8 +57,29 @@ public partial class NewBillViewModel : BaseViewModel
     private void ResetExtraCharges()
     {
         ExtraCharges.Clear();
-        foreach (var name in PredefinedChargeNames)
-            ExtraCharges.Add(new ExtraChargeEntry { Name = name, Amount = 0 });
+        for (int i = 0; i < PredefinedChargeNames.Length; i++)
+        {
+            ExtraCharges.Add(new ExtraChargeEntry
+            {
+                Name = PredefinedChargeNames[i],
+                Amount = 0,
+                ColumnIndex = i % 4,
+                RowIndex = i / 4,
+                TabIndex = i * 2
+            });
+        }
+
+        RefreshExtraChargeLayoutIndexes();
+    }
+
+    private void RefreshExtraChargeLayoutIndexes()
+    {
+        for (int i = 0; i < ExtraCharges.Count; i++)
+        {
+            ExtraCharges[i].ColumnIndex = i % 4;
+            ExtraCharges[i].RowIndex = i / 4;
+            ExtraCharges[i].TabIndex = i * 2;
+        }
     }
 
     // ── Step 1 ───────────────────────────────────────────────────────────────
@@ -66,9 +94,9 @@ public partial class NewBillViewModel : BaseViewModel
         Notes = string.Empty;
 
         var list = await _db.GetCustomersAsync();
-        Customers.Clear();
-        foreach (var c in list) Customers.Add(c);
-        SelectedCustomer = Customers.FirstOrDefault();
+        RefreshCustomers(list);
+        SelectedCustomer = Customers.Skip(1).FirstOrDefault();
+        IsCustomerFormVisible = false;
         NumberOfThicknessTypes = 1;
         try
         {
@@ -85,8 +113,7 @@ public partial class NewBillViewModel : BaseViewModel
     public async Task LoadSinglePageAsync()
     {
         var customers = await _db.GetCustomersAsync();
-        Customers.Clear();
-        foreach (var c in customers) Customers.Add(c);
+        RefreshCustomers(customers);
 
         var types = await _db.GetThicknessTypesAsync();
         AvailableThicknessTypes.Clear();
@@ -98,7 +125,8 @@ public partial class NewBillViewModel : BaseViewModel
             BillItemEntries.Clear();
             ResetExtraCharges();
             Notes = string.Empty;
-            SelectedCustomer = Customers.FirstOrDefault();
+            SelectedCustomer = Customers.Skip(1).FirstOrDefault();
+            IsCustomerFormVisible = false;
             NumberOfThicknessTypes = 1;
             BuildBillItemEntries();
 
@@ -135,6 +163,60 @@ public partial class NewBillViewModel : BaseViewModel
                 });
             }
         }
+    }
+
+    private static Customer CreateAddCustomerOption() => new()
+    {
+        Id = -1,
+        Name = "➕ Add New Customer..."
+    };
+
+    private void RefreshCustomers(IEnumerable<Customer> customers)
+    {
+        Customers.Clear();
+        Customers.Add(CreateAddCustomerOption());
+        foreach (var customer in customers)
+            Customers.Add(customer);
+
+        if (SelectedCustomer is null || SelectedCustomer.Id == -1 || !Customers.Contains(SelectedCustomer))
+            SelectedCustomer = Customers.Skip(1).FirstOrDefault();
+    }
+
+    [RelayCommand]
+    public void OpenCustomerForm()
+    {
+        NewCustomerName = string.Empty;
+        NewCustomerLocation = string.Empty;
+        NewCustomerPhone = string.Empty;
+        NewCustomerAddress = string.Empty;
+        IsCustomerFormVisible = true;
+    }
+
+    [RelayCommand]
+    public void CancelCustomerForm() => IsCustomerFormVisible = false;
+
+    [RelayCommand]
+    public async Task SaveCustomerFromFormAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewCustomerName))
+        {
+            await Shell.Current.DisplayAlert("Validation", "Customer name is required.", "OK");
+            return;
+        }
+
+        var customer = new Customer
+        {
+            Name = NewCustomerName.Trim(),
+            Location = NewCustomerLocation.Trim(),
+            Phone = NewCustomerPhone.Trim(),
+            Address = NewCustomerAddress.Trim()
+        };
+
+        await _db.SaveCustomerAsync(customer);
+        var customers = await _db.GetCustomersAsync();
+        RefreshCustomers(customers);
+        SelectedCustomer = Customers.FirstOrDefault(c => c.Id == customer.Id);
+        IsCustomerFormVisible = false;
     }
 
     [RelayCommand]
@@ -278,15 +360,28 @@ public partial class NewBillViewModel : BaseViewModel
     [RelayCommand]
     private void AddExtraCharge()
     {
-        ExtraCharges.Add(new ExtraChargeEntry { Name = "Transportation", Amount = 0 });
+        ExtraCharges.Add(new ExtraChargeEntry
+        {
+            Name = "Transportation",
+            Amount = 0,
+            ColumnIndex = ExtraCharges.Count % 4,
+            RowIndex = ExtraCharges.Count / 4,
+            TabIndex = ExtraCharges.Count * 2
+        });
+
+        RefreshExtraChargeLayoutIndexes();
     }
 
     [RelayCommand]
-    private void RemoveExtraCharge(ExtraChargeEntry ec) => ExtraCharges.Remove(ec);
+    private void RemoveExtraCharge(ExtraChargeEntry ec)
+    {
+        ExtraCharges.Remove(ec);
+        RefreshExtraChargeLayoutIndexes();
+    }
 
     public double CalcSubTotal()    => BillItemEntries.Sum(e => e.CalcTotal());
     public double CalcExtraTotal()  => ExtraCharges.Sum(e => e.Amount);
-    public double CalcTax()         => (CalcSubTotal() + CalcExtraTotal()) * TaxPercent / 100.0;
+    public double CalcTax()         => CalcSubTotal() * TaxPercent / 100.0;
     public double CalcGrandTotal()  => CalcSubTotal() + CalcExtraTotal() + CalcTax();
 
     [RelayCommand]
@@ -341,8 +436,18 @@ public partial class NewBillViewModel : BaseViewModel
                 int rowNum = 1;
                 foreach (var r in entry.Rows.Where(r => r.Length > 0 && r.Width > 0))
                 {
-                    double cl   = r.Length + entry.CuttingAllowance;
-                    double cw   = r.Width  + entry.CuttingAllowance;
+                    // Add cutting allowance and 2" wastage (converted to the current unit)
+                    double extra = entry.MeasurementUnit switch
+                    {
+                        "mm"   => 2.0 * 25.4,
+                        "cm"   => 2.0 * 2.54,
+                        "inch" => 2.0,
+                        "feet" => 2.0 / 12.0,
+                        _       => 2.0 * 25.4
+                    };
+
+                    double cl   = r.Length + entry.CuttingAllowance + extra;
+                    double cw   = r.Width  + entry.CuttingAllowance + extra;
                     double area = MeasurementRow.CalcAreaSqFt(r.Length, r.Width, entry.MeasurementUnit, r.Quantity);
                     double cArea= MeasurementRow.CalcAreaSqFt(cl, cw, entry.MeasurementUnit, r.Quantity);
 
@@ -398,7 +503,7 @@ public partial class BillItemEntry : ObservableObject
     [ObservableProperty] private string _measurementUnit  = "mm";
     [ObservableProperty] private double _cuttingAllowance = 0;
     [ObservableProperty] private string _shape            = "Block";
-    [ObservableProperty] private string _glassDescription = "Toughened Plain Glass";
+    [ObservableProperty] private string _glassDescription = "Clear glass";
 
     public ObservableCollection<ThicknessType> AvailableTypes { get; } = new();
     public ObservableCollection<MeasurementEntryRow> Rows { get; } = new();
@@ -411,8 +516,17 @@ public partial class BillItemEntry : ObservableObject
         double area = Rows
             .Where(r => r.Length > 0 && r.Width > 0)
             .Sum(r => {
-                double cl = r.Length + CuttingAllowance;
-                double cw = r.Width  + CuttingAllowance;
+                double extra = MeasurementUnit switch
+                {
+                    "mm"   => 2.0 * 25.4,
+                    "cm"   => 2.0 * 2.54,
+                    "inch" => 2.0,
+                    "feet" => 2.0 / 12.0,
+                    _       => 2.0 * 25.4
+                };
+
+                double cl = r.Length + CuttingAllowance + extra;
+                double cw = r.Width  + CuttingAllowance + extra;
                 return MeasurementRow.CalcAreaSqFt(cl, cw, MeasurementUnit, r.Quantity);
             });
         return area * ThicknessType.PricePerSqFt;
@@ -471,4 +585,7 @@ public partial class ExtraChargeEntry : ObservableObject
 {
     [ObservableProperty] private string _name   = string.Empty;
     [ObservableProperty] private double _amount = 0;
+    [ObservableProperty] private int _columnIndex;
+    [ObservableProperty] private int _rowIndex;
+    [ObservableProperty] private int _tabIndex;
 }

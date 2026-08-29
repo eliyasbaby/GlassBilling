@@ -40,7 +40,8 @@ public class Bill
     {
         SubTotal          = Items.Sum(i => i.TotalAmount);
         ExtraChargesTotal = ExtraCharges.Sum(e => e.Amount);
-        TaxAmount         = (SubTotal + ExtraChargesTotal) * TaxPercent / 100.0;
+        // Tax is applied only on the subtotal (exclude extra charges)
+        TaxAmount         = SubTotal * TaxPercent / 100.0;
         TotalAmount       = SubTotal + ExtraChargesTotal + TaxAmount;
     }
 }

@@ -49,6 +49,27 @@
                         <DataTemplate x:DataType="vm:BillItemEntry">
                             <Frame BackgroundColor="White" CornerRadius="12" Padding="14" HasShadow="True">
                                 <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="Glass Type" Style="{StaticResource FormLabel}" />
+                                            <Picker SelectedItem="{Binding GlassDescription, Mode=TwoWay}"
+                                                    BackgroundColor="White"
+                                                    HeightRequest="34"
+                                                    FontSize="13"
+                                                    TextColor="{StaticResource TextPrimary}"
+                                                    SelectedIndexChanged="OnAnySelectionChanged">
+                                                <Picker.ItemsSource>
+                                                    <x:Array Type="{x:Type x:String}">
+                                                        <x:String>Clear glass</x:String>
+                                                        <x:String>Cooling glass</x:String>
+                                                        <x:String>Brown glass</x:String>
+                                                        <x:String>Fluted glass</x:String>
+                                                    </x:Array>
+                                                </Picker.ItemsSource>
+                                            </Picker>
+                                        </VerticalStackLayout>
+                                    </Grid>
+
                                     <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
                                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                                             <Label Text="Select Thickness Types" Style="{StaticResource FormLabel}" />
@@ -77,26 +98,6 @@
                                             </Picker>
                                         </VerticalStackLayout>
                                     </Grid>
-
-                                    <!-- <Grid ColumnDefinitions="*,150,150" ColumnSpacing="10">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                            <Label Text="Glass Description" Style="{StaticResource FormLabel}" />
-                                            <Entry Text="{Binding GlassDescription, Mode=TwoWay}"
-                                                   Style="{StaticResource FormEntry}" />
-                                        </VerticalStackLayout>
-                                        <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                            <Label Text="Shape" Style="{StaticResource FormLabel}" />
-                                            <Entry Text="{Binding Shape, Mode=TwoWay}"
-                                                   Style="{StaticResource FormEntry}" />
-                                        </VerticalStackLayout>
-                                        <VerticalStackLayout Grid.Column="2" Spacing="4">
-                                            <Label Text="Cut Allowance" Style="{StaticResource FormLabel}" />
-                                            <Entry Text="{Binding CuttingAllowance, Mode=TwoWay}"
-                                                   Keyboard="Numeric"
-                                                   TextChanged="OnAnyValueChanged"
-                                                   Style="{StaticResource FormEntry}" />
-                                        </VerticalStackLayout>
-                                    </Grid> -->
 
                                     <!-- <Grid ColumnDefinitions="32,*,*,70,42"
                                           BackgroundColor="{StaticResource PrimaryColor}"
@@ -168,33 +169,59 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <Frame BackgroundColor="White" CornerRadius="12" Padding="16" HasShadow="True">
-                    <VerticalStackLayout Spacing="10">
+                <Frame BackgroundColor="White" CornerRadius="8" Padding="8" HasShadow="True">
+                    <VerticalStackLayout Spacing="6">
                         <Label Text="Extra Charges"
-                               FontSize="18"
+                               FontSize="16"
                                FontAttributes="Bold"
                                TextColor="{StaticResource TextPrimary}" />
 
-                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ExtraCharges}" Spacing="0">
+                        <Grid BindableLayout.ItemsSource="{Binding ExtraCharges}"
+                              ColumnDefinitions="*,*,*,*"
+                              RowDefinitions="Auto,Auto,Auto,Auto"
+                              ColumnSpacing="8"
+                              RowSpacing="10"
+                              HorizontalOptions="Fill">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:ExtraChargeEntry">
-                                    <Grid ColumnDefinitions="*,150" Padding="0,3" ColumnSpacing="10">
-                                        <Entry Grid.Column="0"
-                                               Text="{Binding Name, Mode=TwoWay}"
-                                               Style="{StaticResource FormEntry}" />
-                                        <Entry Grid.Column="1"
-                                               Text="{Binding Amount, Mode=TwoWay}"
-                                               Keyboard="Numeric"
-                                               HorizontalTextAlignment="End"
-                                               Style="{StaticResource FormEntry}"
-                                               TextChanged="OnAnyValueChanged" />
-                                    </Grid>
+                                    <Border Grid.Row="{Binding RowIndex}"
+                                            Grid.Column="{Binding ColumnIndex}"
+                                            Stroke="#E5E7EB"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#F8FAFC"
+                                            StrokeShape="RoundRectangle 8"
+                                            Padding="8,6"
+                                            HorizontalOptions="Fill">
+                                        <Grid ColumnDefinitions="*,80" ColumnSpacing="6" HeightRequest="44">
+                                            <Entry Grid.Column="0"
+                                                   Text="{Binding Name, Mode=TwoWay}"
+                                                   Placeholder="Name"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource TextPrimary}"
+                                                   PlaceholderColor="{StaticResource TextSecondary}"
+                                                   BackgroundColor="White"
+                                                   HeightRequest="32" />
+
+                                            <Entry Grid.Column="1"
+                                                   Text="{Binding Amount, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   Placeholder="0"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource TextPrimary}"
+                                                   PlaceholderColor="{StaticResource TextSecondary}"
+                                                   BackgroundColor="White"
+                                                   HeightRequest="32"
+                                                   HorizontalTextAlignment="End"
+                                                   TextChanged="OnAnyValueChanged" />
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
+                        </Grid>
 
                         <Button Text="+ Add Extra Charge"
                                 Style="{StaticResource OutlineButton}"
+                                HeightRequest="34"
                                 Command="{Binding AddExtraChargeCommand}" />
                     </VerticalStackLayout>
                 </Frame>

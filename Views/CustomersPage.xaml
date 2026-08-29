@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:GlassBilling.ViewModels"
     xmlns:models="clr-namespace:GlassBilling.Models"
+    xmlns:controls="clr-namespace:GlassBilling.Views.Controls"
     Title="Customers">
 
     <Grid RowDefinitions="Auto,Auto,*">
@@ -73,33 +74,14 @@
             Grid.RowSpan="3"
             BackgroundColor="#80000000"
             IsVisible="{Binding IsEditing}">
-            <Frame
-                BackgroundColor="White"
-                CornerRadius="16"
-                Padding="20"
-                Margin="20"
-                VerticalOptions="Center">
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="Customer Details" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
-
-                    <Label Text="Name *" Style="{StaticResource FormLabel}" />
-                    <Entry Text="{Binding Name}" Placeholder="Full name" Style="{StaticResource FormEntry}" />
-
-                    <Label Text="Location / Area" Style="{StaticResource FormLabel}" />
-                    <Entry Text="{Binding Location}" Placeholder="e.g. Kongad" Style="{StaticResource FormEntry}" />
-
-                    <Label Text="Phone" Style="{StaticResource FormLabel}" />
-                    <Entry Text="{Binding Phone}" Placeholder="+91 XXXXX XXXXX" Keyboard="Telephone" Style="{StaticResource FormEntry}" />
-
-                    <Label Text="Address" Style="{StaticResource FormLabel}" />
-                    <Editor Text="{Binding Address}" Placeholder="Full address" HeightRequest="80" BackgroundColor="White" />
-
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
-                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelEditCommand}" />
-                        <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCustomerCommand}" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Frame>
+            <controls:CustomerFormView
+                Title="Customer Details"
+                NameText="{Binding Name}"
+                LocationText="{Binding Location}"
+                PhoneText="{Binding Phone}"
+                AddressText="{Binding Address}"
+                CancelCommand="{Binding CancelEditCommand}"
+                SaveCommand="{Binding SaveCustomerCommand}" />
         </Grid>
 
         <!-- Loading -->
