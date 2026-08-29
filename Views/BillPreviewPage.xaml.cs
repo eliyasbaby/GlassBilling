@@ -221,7 +221,7 @@ public partial class BillPreviewPage : ContentPage
     {
         var entry = new Entry
         {
-            Text = item.PricePerSqFt.ToString("N3"),
+            Text = item.PricePerSqFt.ToString("N4"),
             Keyboard = Keyboard.Numeric,
             FontSize = 13,
             TextColor = TextDark,
