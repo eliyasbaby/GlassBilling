@@ -35,8 +35,8 @@ public partial class NewBillViewModel : BaseViewModel
     // ── Step 4 – Extra Charges ────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<ExtraChargeEntry> _extraCharges = new();
     [ObservableProperty] private double _taxPercent = 0;
+    [ObservableProperty] private double _discountAmount = 0;
     [ObservableProperty] private string _notes = string.Empty;
-    [ObservableProperty] private double _discount = 0;
 
 
     public NewBillViewModel(DatabaseService db, PdfService pdf)
@@ -381,8 +381,9 @@ public partial class NewBillViewModel : BaseViewModel
 
     public double CalcSubTotal()    => BillItemEntries.Sum(e => e.CalcTotal());
     public double CalcExtraTotal()  => ExtraCharges.Sum(e => e.Amount);
-    public double CalcTax()         => CalcSubTotal() * TaxPercent / 100.0;
-    public double CalcGrandTotal()  => CalcSubTotal() + CalcExtraTotal() + CalcTax();
+    public double CalcDiscount()    => DiscountAmount;
+    public double CalcTax()         => (CalcSubTotal() + CalcExtraTotal() - CalcDiscount()) * TaxPercent / 100.0;
+    public double CalcGrandTotal()  => CalcSubTotal() + CalcExtraTotal() + CalcTax() - CalcDiscount();
 
     [RelayCommand]
     private async Task GenerateBillAsync()
@@ -413,11 +414,12 @@ public partial class NewBillViewModel : BaseViewModel
         {
             var bill = new Bill
             {
-                CustomerId = SelectedCustomer!.Id,
-                Customer   = SelectedCustomer,
-                BillDate   = DateTime.Now,
-                TaxPercent = TaxPercent,
-                Notes      = Notes
+                CustomerId      = SelectedCustomer!.Id,
+                Customer        = SelectedCustomer,
+                BillDate        = DateTime.Now,
+                TaxPercent      = TaxPercent,
+                DiscountAmount  = DiscountAmount,
+                Notes           = Notes
             };
 
             foreach (var entry in BillItemEntries)

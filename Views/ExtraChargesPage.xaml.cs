@@ -31,6 +31,7 @@ public partial class ExtraChargesPage : ContentPage
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(NewBillViewModel.TaxPercent)
+            or nameof(NewBillViewModel.DiscountAmount)
             or nameof(NewBillViewModel.ExtraCharges))
         {
             RefreshTotals();
@@ -41,6 +42,7 @@ public partial class ExtraChargesPage : ContentPage
     {
         double sub   = _vm.CalcSubTotal();
         double extra = _vm.CalcExtraTotal();
+        double discount = _vm.CalcDiscount();
         double tax   = _vm.CalcTax();
         double grand = _vm.CalcGrandTotal();
 
@@ -48,6 +50,7 @@ public partial class ExtraChargesPage : ContentPage
         ExtraTotalLbl.Text = $"₹{extra:N2}";
         TaxLbl.Text        = $"Tax ({_vm.TaxPercent:N0}%)";
         TaxAmtLbl.Text     = $"₹{tax:N2}";
+        DiscountAmtLbl.Text = $"₹{discount:N2}";
         GrandTotalLbl.Text = $"₹{grand:N2}";
     }
 

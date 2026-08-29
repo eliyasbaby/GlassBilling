@@ -324,8 +324,10 @@ public partial class BillPreviewPage : ContentPage
         grid.Add(Cell(_bill.SubTotal.ToString("N2"), 1, 0), 1, 0);
         grid.Add(Cell($"Tax ({_bill.TaxPercent:N0}%)", 0, 1, bold: true, align: TextAlignment.End), 0, 1);
         grid.Add(Cell(_bill.TaxAmount.ToString("N2"), 1, 1), 1, 1);
-        grid.Add(Cell("Grand Total (\u20B9)", 0, 2, bold: true, align: TextAlignment.End), 0, 2);
-        grid.Add(Cell(_bill.TotalAmount.ToString("N2"), 1, 2, bold: true), 1, 2);
+        grid.Add(Cell("Discount (\u20B9)", 0, 2, bold: true, align: TextAlignment.End), 0, 2);
+        grid.Add(Cell(_bill.DiscountAmount.ToString("N2"), 1, 2), 1, 2);
+        grid.Add(Cell("Grand Total (\u20B9)", 0, 3, bold: true, align: TextAlignment.End), 0, 3);
+        grid.Add(Cell(_bill.TotalAmount.ToString("N2"), 1, 3, bold: true), 1, 3);
         TotalsLayout.Children.Add(grid);
     }
 

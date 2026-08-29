@@ -581,6 +581,8 @@ public class PdfService
             AddBodyCell(table, bill.SubTotal.ToString("N2"));
             AddBodyCell(table, $"Tax ({bill.TaxPercent:N0}%)", true);
             AddBodyCell(table, bill.TaxAmount.ToString("N2"));
+            AddBodyCell(table, "Discount (\u20B9)", true);
+            AddBodyCell(table, bill.DiscountAmount.ToString("N2"));
             AddBodyCell(table, "Grand Total (\u20B9)", true);
             AddBodyCell(table, bill.TotalAmount.ToString("N2"), true);
         });

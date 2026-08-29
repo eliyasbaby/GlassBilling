@@ -21,9 +21,11 @@ public class Bill
 
     public double TaxPercent { get; set; } = 0;  // e.g. 18 for 18%
 
+    public double DiscountAmount { get; set; } = 0;
+
     public double TaxAmount { get; set; }
 
-    public double TotalAmount { get; set; }       // SubTotal + ExtraChargesTotal + TaxAmount
+    public double TotalAmount { get; set; }       // SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount
 
     public string Notes { get; set; } = string.Empty;
 
@@ -40,8 +42,8 @@ public class Bill
     {
         SubTotal          = Items.Sum(i => i.TotalAmount);
         ExtraChargesTotal = ExtraCharges.Sum(e => e.Amount);
-        // Tax is applied only on the subtotal (exclude extra charges)
-        TaxAmount         = SubTotal * TaxPercent / 100.0;
-        TotalAmount       = SubTotal + ExtraChargesTotal + TaxAmount;
+        // Tax is applied on the subtotal + extra charges after discount is deducted
+        TaxAmount         = (SubTotal + ExtraChargesTotal - DiscountAmount) * TaxPercent / 100.0;
+        TotalAmount       = SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount;
     }
 }

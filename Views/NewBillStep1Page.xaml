@@ -286,6 +286,10 @@
                             <Label x:Name="TaxLbl" FontSize="13" TextColor="{StaticResource TextPrimary}" />
                             <Label Grid.Column="1" x:Name="TaxAmtLbl" FontSize="13" TextColor="{StaticResource TextPrimary}" />
                         </Grid>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Discount" FontSize="13" TextColor="{StaticResource TextPrimary}" />
+                            <Label Grid.Column="1" x:Name="DiscountAmtLbl" FontSize="13" TextColor="{StaticResource TextPrimary}" />
+                        </Grid>
                         <BoxView HeightRequest="1.5" BackgroundColor="{StaticResource PrimaryColor}" />
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Text="Grand Total" FontAttributes="Bold" FontSize="17" TextColor="{StaticResource PrimaryColor}" />
