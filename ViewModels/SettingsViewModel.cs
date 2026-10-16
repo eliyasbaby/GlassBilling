@@ -12,6 +12,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly BackupService _backup;
 
     [ObservableProperty] private ObservableCollection<ThicknessType> _thicknessTypes = new();
+    [ObservableProperty] private ObservableCollection<GlassType> _glassTypes = new();
     [ObservableProperty] private string _companyName    = string.Empty;
     [ObservableProperty] private string _companyAddress = string.Empty;
     [ObservableProperty] private string _companyPhone   = string.Empty;
@@ -34,6 +35,11 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private ThicknessType _editingThickness = new();
     [ObservableProperty] private string _editName = string.Empty;
     [ObservableProperty] private double _editPrice;
+
+    [ObservableProperty] private bool _isEditingGlassType;
+    [ObservableProperty] private GlassType _editingGlassType = new();
+    [ObservableProperty] private string _editGlassTypeName = string.Empty;
+    [ObservableProperty] private double _editGlassWastageInches = 2;
 
     public SettingsViewModel(DatabaseService db, BackupService backup)
     {
@@ -88,6 +94,14 @@ public partial class SettingsViewModel : BaseViewModel
         var list = await _db.GetThicknessTypesAsync(activeOnly: false);
         ThicknessTypes.Clear();
         foreach (var t in list) ThicknessTypes.Add(t);
+    }
+
+    [RelayCommand]
+    public async Task LoadGlassTypesAsync()
+    {
+        var list = await _db.GetGlassTypesAsync();
+        GlassTypes.Clear();
+        foreach (var glassType in list) GlassTypes.Add(glassType);
     }
 
     [RelayCommand]
@@ -161,6 +175,57 @@ public partial class SettingsViewModel : BaseViewModel
 
     [RelayCommand]
     private void CancelThicknessEdit() => IsEditingThickness = false;
+
+    [RelayCommand]
+    private void EditGlassType(GlassType glassType)
+    {
+        EditingGlassType = glassType;
+        EditGlassTypeName = glassType.Name;
+        EditGlassWastageInches = glassType.WastageInches;
+        IsEditingGlassType = true;
+    }
+
+    [RelayCommand]
+    private void AddGlassType()
+    {
+        EditingGlassType = new GlassType { SortOrder = GlassTypes.Count + 1 };
+        EditGlassTypeName = string.Empty;
+        EditGlassWastageInches = 2;
+        IsEditingGlassType = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveGlassTypeAsync()
+    {
+        var name = EditGlassTypeName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            await Shell.Current.DisplayAlert("Validation", "Glass type name is required.", "OK");
+            return;
+        }
+
+        if (EditGlassWastageInches < 0)
+        {
+            await Shell.Current.DisplayAlert("Validation", "Wastage cannot be negative.", "OK");
+            return;
+        }
+
+        if (GlassTypes.Any(t => t.Id != EditingGlassType.Id &&
+            string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            await Shell.Current.DisplayAlert("Validation", "That glass type already exists.", "OK");
+            return;
+        }
+
+        EditingGlassType.Name = name;
+        EditingGlassType.WastageInches = EditGlassWastageInches;
+        await _db.SaveGlassTypeAsync(EditingGlassType);
+        IsEditingGlassType = false;
+        await LoadGlassTypesAsync();
+    }
+
+    [RelayCommand]
+    private void CancelGlassTypeEdit() => IsEditingGlassType = false;
 
     [RelayCommand]
     private async Task AddThicknessTypeAsync()

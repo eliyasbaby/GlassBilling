@@ -17,5 +17,6 @@ public partial class SettingsPage : ContentPage
     {
         base.OnAppearing();
         await _vm.LoadThicknessTypesAsync();
+        await _vm.LoadGlassTypesAsync();
     }
 }

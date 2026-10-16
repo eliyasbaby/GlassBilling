@@ -1,5 +1,9 @@
 using GlassBilling.Models;
 
+#if WINDOWS
+using System.Diagnostics;
+#endif
+
 #if !ANDROID
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -14,42 +18,108 @@ namespace GlassBilling.Services;
 public class PdfService
 {
     private readonly DatabaseService _db;
+    private readonly AppLogService _log;
 
-    public PdfService(DatabaseService db)
+    public PdfService(DatabaseService db, AppLogService log)
     {
         _db = db;
+        _log = log;
     }
 
     public async Task<string> GenerateBillAsync(Bill bill,
         string companyName, string companyAddress, string companyPhone)
     {
+        await _log.InfoAsync($"PDF generation started. BillId={bill.Id}, BillNumber={bill.BillNumber ?? "(empty)"}");
+
+        try
+        {
 #if ANDROID
-        return await GenerateHtmlAsync(bill);
+            var filePath = await GenerateHtmlAsync(bill);
 #else
-        return await GeneratePdfAsync(bill);
+            var filePath = await GeneratePdfAsync(bill);
 #endif
+            await LogFileAsync("PDF generation completed", filePath);
+            return filePath;
+        }
+        catch (Exception ex)
+        {
+            await _log.ErrorAsync($"PDF generation failed. BillId={bill.Id}, BillNumber={bill.BillNumber ?? "(empty)"}", ex);
+            throw;
+        }
     }
 
     public async Task ShareBillAsync(string filePath, string billNumber)
     {
-        await Share.RequestAsync(new ShareFileRequest
+        await _log.InfoAsync($"Bill sharing started. BillNumber={billNumber}, File={filePath}");
+
+        try
         {
-            Title = $"Bill {billNumber}",
-            File = new ShareFile(filePath)
-        });
+            await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = $"Bill {billNumber}",
+                File = new ShareFile(filePath)
+            });
+            await _log.InfoAsync($"Bill sharing completed. BillNumber={billNumber}");
+        }
+        catch (Exception ex)
+        {
+            await _log.ErrorAsync($"Bill sharing failed. BillNumber={billNumber}, File={filePath}", ex);
+            throw;
+        }
     }
 
     public async Task OpenBillAsync(string filePath)
     {
-        await Launcher.OpenAsync(new OpenFileRequest
+        await _log.InfoAsync($"Bill opening started. File={filePath}");
+
+        try
         {
-            File = new ReadOnlyFile(filePath)
-        });
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("The generated bill file was not found.", filePath);
+
+            var opened = await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                Title = "Open Bill",
+                File = new ReadOnlyFile(filePath)
+            });
+
+            if (opened)
+            {
+                await _log.InfoAsync($"Bill opened with the default file handler. File={filePath}");
+                return;
+            }
+
+#if WINDOWS
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = filePath,
+                UseShellExecute = true
+            });
+
+            if (process is null)
+                throw new InvalidOperationException("No application is registered to open PDF files.");
+
+            await _log.InfoAsync($"Bill opened with the Windows shell fallback. File={filePath}");
+#else
+            throw new InvalidOperationException("No application is registered to open this file.");
+#endif
+        }
+        catch (Exception ex)
+        {
+            await _log.ErrorAsync($"Bill opening failed. File={filePath}", ex);
+            throw;
+        }
+    }
+
+    private async Task LogFileAsync(string message, string filePath)
+    {
+        var length = File.Exists(filePath) ? new FileInfo(filePath).Length : 0;
+        await _log.InfoAsync($"{message}. File={filePath}, Exists={File.Exists(filePath)}, Bytes={length}");
     }
 
     private async Task<string> GenerateHtmlAsync(Bill bill)
     {
-        string fileName = $"Bill_{bill.BillNumber?.Replace("-", "_")}_{DateTime.Now:yyyyMMdd}.html";
+        string fileName = BuildBillFileName(bill, ".html");
         string directory = GetWritableDirectory();
         Directory.CreateDirectory(directory);
         string filePath = Path.Combine(directory, fileName);
@@ -243,7 +313,7 @@ public class PdfService
         var logoBytes = await LoadImageBytesAsync("glasslogo.png");
         var upiBytes = await LoadImageBytesAsync("upi.jpeg");
 
-        string fileName = $"Bill_{bill.BillNumber?.Replace("-", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+        string fileName = BuildBillFileName(bill, ".pdf");
         string directory = GetWritableDirectory();
         Directory.CreateDirectory(directory);
         string filePath = Path.Combine(directory, fileName);
@@ -260,11 +330,11 @@ public class PdfService
                     page.Content().Column(col =>
                     {
                         col.Item().Element(c => ComposeInvoiceHeader(c, company, address, phone, logoBytes));
-                        col.Item().LineHorizontal(0.6f).LineColor(QuestPDFColors.Grey.Medium);
+                        col.Item().LineHorizontal(0.45f).LineColor(QuestPDFColors.Grey.Medium);
                         col.Item().Element(c => ComposeCustomerBlock(c, bill, officeNo, email, gstin));
-                        col.Item().LineHorizontal(0.6f).LineColor(QuestPDFColors.Grey.Medium);
-                        col.Item().AlignCenter().Text("PROFORMA INVOICE").FontSize(15).Bold().Underline();
-                        col.Item().LineHorizontal(0.6f).LineColor(QuestPDFColors.Grey.Medium);
+                        col.Item().LineHorizontal(0.45f).LineColor(QuestPDFColors.Grey.Medium);
+                        col.Item().AlignCenter().Text("PROFORMA INVOICE").FontSize(15).SemiBold().Underline();
+                        col.Item().LineHorizontal(0.45f).LineColor(QuestPDFColors.Grey.Medium);
                         col.Item().Element(c => ComposeItems(c, bill));
                         col.Item().PaddingTop(8).Element(c => ComposeBottom(c, bill, bankName, bankAcc, bankIfsc, bankBranch, upi, terms, upiBytes));
 
@@ -275,7 +345,7 @@ public class PdfService
                                 n.Item().Text(bill.Notes);
                             });
 
-                        col.Item().PaddingTop(6).LineHorizontal(0.6f).LineColor(QuestPDFColors.Grey.Medium);
+                        col.Item().PaddingTop(6).LineHorizontal(0.45f).LineColor(QuestPDFColors.Grey.Medium);
                     });
                 });
             })
@@ -285,72 +355,53 @@ public class PdfService
         return filePath;
     }
 
+    private static string BuildBillFileName(Bill bill, string extension)
+    {
+        var billNumber = string.IsNullOrWhiteSpace(bill.BillNumber) ? "Unnumbered" : bill.BillNumber;
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        var safeBillNumber = new string(billNumber
+            .Select(character => invalidCharacters.Contains(character) ? '_' : character)
+            .ToArray());
+
+        return $"Bill_{safeBillNumber}_{DateTime.Now:yyyyMMdd}{extension}";
+    }
+
     private static string GetWritableDirectory()
     {
-        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GlassBilling", "Bills");
+        string path = Path.Combine(FileSystem.AppDataDirectory, "Bills");
         return path;
     }
 
     private static async Task<byte[]?> LoadImageBytesAsync(string fileName)
     {
-        var packageCandidates = new[]
+        try
         {
-            fileName,
-            Path.Combine("Resources", "Images", fileName),
-            Path.Combine("Images", fileName),
-            Path.Combine("Resources", fileName)
-        };
-
-        foreach (var packagePath in packageCandidates)
+            await using var packageStream = await FileSystem.OpenAppPackageFileAsync(fileName);
+            using var ms = new MemoryStream();
+            await packageStream.CopyToAsync(ms);
+            return ms.ToArray();
+        }
+        catch (FileNotFoundException)
         {
-            try
-            {
-                await using var packageStream = await FileSystem.OpenAppPackageFileAsync(packagePath);
-                using var ms = new MemoryStream();
-                await packageStream.CopyToAsync(ms);
-                return ms.ToArray();
-            }
-            catch (FileNotFoundException)
-            {
-                // try the next candidate
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // try the next candidate
-            }
-            catch (IOException)
-            {
-                // try the next candidate
-            }
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (NotSupportedException)
+        {
         }
 
         var diskCandidates = new[]
         {
             Path.Combine(AppContext.BaseDirectory, fileName),
-            Path.Combine(AppContext.BaseDirectory, "Resources", "Images", fileName),
             Path.Combine(AppContext.BaseDirectory, "Images", fileName),
-            Path.Combine(Environment.CurrentDirectory, fileName),
-            Path.Combine(Environment.CurrentDirectory, "Resources", "Images", fileName),
-            Path.Combine(Environment.CurrentDirectory, "Images", fileName),
-            Path.Combine("Resources", "Images", fileName),
-            Path.Combine("Resources", fileName)
+            Path.Combine(Environment.CurrentDirectory, fileName)
         };
 
         foreach (var path in diskCandidates)
         {
-            try
-            {
-                if (File.Exists(path))
-                    return await File.ReadAllBytesAsync(path);
-            }
-            catch (DirectoryNotFoundException)
-            {
-                // ignore and continue
-            }
-            catch (FileNotFoundException)
-            {
-                // ignore and continue
-            }
+            if (File.Exists(path))
+                return await File.ReadAllBytesAsync(path);
         }
 
         return null;

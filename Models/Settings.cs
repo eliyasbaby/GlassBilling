@@ -25,4 +25,7 @@ public class Settings
 
     // Terms
     public string TermsConditions { get; set; } = string.Empty;
+
+    // Salesman / logged-in user to appear on bills
+    public string SalesmanName { get; set; } = string.Empty;
 }

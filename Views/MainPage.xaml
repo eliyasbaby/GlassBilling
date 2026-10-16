@@ -3,17 +3,13 @@
     x:Class="GlassBilling.Views.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="#F3F6F9">
+    Background="{StaticResource AppBackgroundBrush}">
 
     <ScrollView>
-        <Grid Padding="24" RowDefinitions="Auto,Auto,*" RowSpacing="24">
-
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#FAFCFF" Offset="0" />
-                    <GradientStop Color="#EEF3F8" Offset="1" />
-                </LinearGradientBrush>
-            </Grid.Background>
+        <Grid Padding="24"
+              RowDefinitions="Auto,Auto,*"
+              RowSpacing="24"
+              Background="{StaticResource AppBackgroundBrush}">
 
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                 <Label

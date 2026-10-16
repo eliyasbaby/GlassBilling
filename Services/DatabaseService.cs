@@ -1,5 +1,7 @@
 using GlassBilling.Models;
 using SQLite;
+using System.Diagnostics;
+using System.IO;
 
 namespace GlassBilling.Services;
 
@@ -17,6 +19,7 @@ public class DatabaseService
             SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create | SQLiteOpenFlags.SharedCache);
         await _db.CreateTableAsync<Customer>();
         await _db.CreateTableAsync<ThicknessType>();
+        await _db.CreateTableAsync<GlassType>();
         await _db.CreateTableAsync<Bill>();
         await _db.CreateTableAsync<BillItem>();
         await _db.CreateTableAsync<MeasurementRow>();
@@ -30,6 +33,9 @@ public class DatabaseService
     {
         if (await _db!.Table<ThicknessType>().CountAsync() == 0)
             await _db.InsertAllAsync(ThicknessType.Defaults);
+
+        if (await _db.Table<GlassType>().CountAsync() == 0)
+            await _db.InsertAllAsync(GlassType.Defaults);
     }
 
     // ── Customers ─────────────────────────────────────────────────────────────
@@ -77,6 +83,22 @@ public class DatabaseService
     {
         await InitAsync();
         return await _db!.DeleteAsync(t);
+    }
+
+    // ── Glass Types ──────────────────────────────────────────────────────────
+
+    public async Task<List<GlassType>> GetGlassTypesAsync()
+    {
+        await InitAsync();
+        return await _db!.Table<GlassType>().OrderBy(t => t.SortOrder).ToListAsync();
+    }
+
+    public async Task<int> SaveGlassTypeAsync(GlassType glassType)
+    {
+        await InitAsync();
+        return glassType.Id == 0
+            ? await _db!.InsertAsync(glassType)
+            : await _db!.UpdateAsync(glassType);
     }
 
     // ── Bills ─────────────────────────────────────────────────────────────────
@@ -135,21 +157,69 @@ public class DatabaseService
                 await _db.Table<MeasurementRow>().DeleteAsync(m => m.BillItemId == item.Id);
             }
             await _db.Table<BillItem>().DeleteAsync(i => i.BillId == bill.Id);
+                // Reset in-memory item Ids so they are re-inserted (avoid Update on deleted rows)
+                foreach (var item in bill.Items)
+                {
+                    item.Id = 0;
+                    // also reset measurement ids so they are inserted rather than updated
+                    if (item.Measurements is not null)
+                    {
+                        foreach (var m in item.Measurements)
+                            m.Id = 0;
+                    }
+                }
         }
 
+        Debug.WriteLine($"[DB] Saving Bill id={bill.Id} itemsToSave={bill.Items?.Count ?? 0}");
+        // also write to a log file next to the DB for easier capture
+        var logPath = DbPath + ".savelog.txt";
+        try
+        {
+            File.AppendAllText(logPath, $"[{DateTime.Now:O}] Saving Bill id={bill.Id} itemsToSave={bill.Items?.Count ?? 0}\n");
+        }
+        catch { }
         foreach (var item in bill.Items)
         {
             item.BillId = bill.Id;
-            if (item.Id == 0) await _db.InsertAsync(item);
-            else await _db.UpdateAsync(item);
+            if (item.Id == 0)
+            {
+                await _db.InsertAsync(item);
+                Debug.WriteLine($"[DB] Inserted BillItem temp -> new Id={item.Id} thickness={item.ThicknessName}");
+                try { File.AppendAllText(logPath, $"[{DateTime.Now:O}] Inserted BillItem new Id={item.Id} thickness={item.ThicknessName}\n"); } catch { }
+            }
+            else
+            {
+                await _db.UpdateAsync(item);
+                Debug.WriteLine($"[DB] Updated BillItem Id={item.Id}");
+            }
 
+            Debug.WriteLine($"[DB] Saving measurements for item.Id={item.Id} count={item.Measurements?.Count ?? 0}");
+            try { File.AppendAllText(logPath, $"[{DateTime.Now:O}] Saving measurements for item.Id={item.Id} count={item.Measurements?.Count ?? 0}\n"); } catch { }
             foreach (var row in item.Measurements)
             {
                 row.BillItemId = item.Id;
-                if (row.Id == 0) await _db.InsertAsync(row);
-                else await _db.UpdateAsync(row);
+                if (row.Id == 0)
+                {
+                    await _db.InsertAsync(row);
+                    Debug.WriteLine($"[DB] Inserted Measurement Id={row.Id} BillItemId={row.BillItemId} len={row.Length} wid={row.Width}");
+                    try { File.AppendAllText(logPath, $"[{DateTime.Now:O}] Inserted Measurement Id={row.Id} BillItemId={row.BillItemId} len={row.Length} wid={row.Width}\n"); } catch { }
+                }
+                else
+                {
+                    await _db.UpdateAsync(row);
+                    Debug.WriteLine($"[DB] Updated Measurement Id={row.Id} BillItemId={row.BillItemId}");
+                    try { File.AppendAllText(logPath, $"[{DateTime.Now:O}] Updated Measurement Id={row.Id} BillItemId={row.BillItemId}\n"); } catch { }
+                }
             }
         }
+
+        // Log persisted counts
+        try
+        {
+            var mcount = await _db.Table<MeasurementRow>().Where(m => bill.Items.Select(i => i.Id).Contains(m.BillItemId)).CountAsync();
+            Debug.WriteLine($"[DB] After save: total measurement rows for bill {bill.Id} = {mcount}");
+        }
+        catch { }
 
         // Delete old extra charges and re-insert
         await _db.Table<ExtraCharge>().DeleteAsync(e => e.BillId == bill.Id);

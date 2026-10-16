@@ -1,10 +1,13 @@
 using GlassBilling.Models;
 using GlassBilling.Services;
+using System.Text.Json;
+using System.Diagnostics;
+using Microsoft.Maui.Controls;
 
 namespace GlassBilling.Views;
 
 [QueryProperty(nameof(Bill), "Bill")]
-public partial class BillPreviewPage : ContentPage
+public partial class BillPreviewPage : ContentPage, IQueryAttributable
 {
     private readonly PdfService _pdf;
     private readonly DatabaseService _db;
@@ -23,6 +26,65 @@ public partial class BillPreviewPage : ContentPage
         set { _bill = value; PopulateBillView(); }
     }
 
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query == null) return;
+
+        if (query.TryGetValue("Bill", out var val) && val is Bill b)
+        {
+            Bill = b;
+            return;
+        }
+
+        if (query.TryGetValue("Bill", out var jsonObj) && jsonObj is string json)
+        {
+            try
+            {
+                var deserialized = JsonSerializer.Deserialize<Bill>(json);
+                if (deserialized is not null) Bill = deserialized;
+            }
+            catch { /* ignore invalid JSON */ }
+        }
+
+        // If caller passed only the BillId, load full details from DB to ensure Items/Measurements are populated
+        if (query.TryGetValue("BillId", out var idObj))
+        {
+            int id = 0;
+            if (idObj is int iid) id = iid;
+            else if (idObj is long il) id = (int)il;
+            else if (idObj is string s && int.TryParse(s, out var parsed)) id = parsed;
+
+            if (id > 0)
+            {
+                LoadBillByIdAsync(id);
+            }
+        }
+    }
+
+    private async void LoadBillByIdAsync(int id)
+    {
+        try
+        {
+            var bill = await _db.GetBillWithDetailsAsync(id);
+            if (bill is not null)
+            {
+                Debug.WriteLine($"[BillPreview] Loaded bill id={bill.Id}, items={bill.Items?.Count ?? 0}, extras={bill.ExtraCharges?.Count ?? 0}");
+                foreach (var it in bill.Items)
+                {
+                    Debug.WriteLine($"[BillPreview] Item id={it.Id} thickness='{it.ThicknessName}' glass='{it.GlassDescription}' unit='{it.MeasurementUnit}' price={it.PricePerSqFt} measurements={it.Measurements?.Count ?? 0}");
+                    foreach (var m in it.Measurements)
+                        Debug.WriteLine($"[BillPreview]  Row id={m.Id} len={m.Length} wid={m.Width} chargeArea={m.ChargeAreaSqFt}");
+                }
+
+                Bill = bill;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
     public BillPreviewPage(PdfService pdf, DatabaseService db)
     {
         InitializeComponent();
@@ -34,6 +96,17 @@ public partial class BillPreviewPage : ContentPage
     {
         if (_bill is null) return;
 
+        // If Items are empty, ensure we load full details from DB (some navigation paths pass partial objects)
+        if ((_bill.Items == null || _bill.Items.Count == 0) && _bill.Id > 0)
+        {
+            try
+            {
+                var fresh = await _db.GetBillWithDetailsAsync(_bill.Id);
+                if (fresh is not null) _bill = fresh;
+            }
+            catch { }
+        }
+
         var s = await _db.GetSettingsAsync();
 
         CompanyLabel.Text = s.CompanyName;
@@ -42,6 +115,7 @@ public partial class BillPreviewPage : ContentPage
         OfficePhoneLabel.Text = string.IsNullOrWhiteSpace(s.CompanyPhone) ? "Office:" : $"Office: {s.CompanyPhone}";
         CompanyEmailValueLabel.Text = string.IsNullOrWhiteSpace(s.CompanyEmail) ? "E-mail:" : $"E-mail: {s.CompanyEmail}";
         CompanyGstinValueLabel.Text = string.IsNullOrWhiteSpace(s.CompanyGstin) ? "GSTIN:" : $"GSTIN: {s.CompanyGstin}";
+        
 
         CustomerNameLabel.Text = $"Name: {_bill.Customer?.Name ?? ""}";
         CustomerLocationLabel.Text = $"Location: {_bill.Customer?.Location ?? ""}";
@@ -49,6 +123,7 @@ public partial class BillPreviewPage : ContentPage
 
         BillDateLabel.Text = $"Date : {_bill.BillDate:dd-MM-yyyy}";
         BillNumberLabel.Text = $"PI No: {_bill.BillNumber}";
+        SalesmanLabel.Text = $"Salesman: {_bill.SalesmanName}";
 
         BuildMeasurementTable();
         BuildBankAndTerms(s);
@@ -172,7 +247,7 @@ public partial class BillPreviewPage : ContentPage
     {
         var displayWidth = DeviceDisplay.MainDisplayInfo.Width / DeviceDisplay.MainDisplayInfo.Density;
         var availableWidth = Math.Max(320, displayWidth - 140);
-        return Math.Min(780, availableWidth);
+        return Math.Min(744, availableWidth);
     }
 
     private static Label Label(string text, double size, bool bold = false,
@@ -219,28 +294,20 @@ public partial class BillPreviewPage : ContentPage
 
     private Border RateCell(BillItem item)
     {
-        var entry = new Entry
-        {
-            Text = item.PricePerSqFt.ToString("N4"),
-            Keyboard = Keyboard.Numeric,
-            FontSize = 13,
-            TextColor = TextDark,
-            BackgroundColor = Color.FromArgb("#E7E7E7"),
-            HeightRequest = 26,
-            Margin = new Thickness(0),
-            HorizontalTextAlignment = TextAlignment.End
-        };
-
-        entry.Completed += (s, e) => OnRateChanged(entry, item);
-        entry.Unfocused += (s, e) => OnRateChanged(entry, item);
-
         return new Border
         {
             Stroke = Border,
             StrokeThickness = 0.6,
             Padding = new Thickness(3, 1),
             BackgroundColor = Colors.White,
-            Content = entry
+            Content = new Label
+            {
+                Text = item.PricePerSqFt.ToString("N4"),
+                FontSize = 13,
+                TextColor = TextDark,
+                HorizontalTextAlignment = TextAlignment.End,
+                VerticalTextAlignment = TextAlignment.Center
+            }
         };
     }
 
@@ -331,15 +398,19 @@ public partial class BillPreviewPage : ContentPage
         TotalsLayout.Children.Add(grid);
     }
 
-    private void OnRateChanged(Entry entry, BillItem item)
+    private async Task SaveBillBeforeFinalizingAsync()
     {
-        if (_bill is null || !double.TryParse(entry.Text, out var rate) || Math.Abs(rate - item.PricePerSqFt) < 0.001)
-            return;
+        if (_bill is null) return;
 
-        item.PricePerSqFt = rate;
-        item.TotalAmount = item.TotalChargeAreaSqFt * rate;
-        _bill.Recalculate();
-        PopulateBillView();
+        try
+        {
+            await _db.SaveBillAsync(_bill);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Could not save the final bill: {ex.Message}", "OK");
+            throw;
+        }
     }
 
     private async void OnGeneratePdfClicked(object sender, EventArgs e)
@@ -348,6 +419,7 @@ public partial class BillPreviewPage : ContentPage
         LoadingOverlay.IsVisible = true;
         try
         {
+            await SaveBillBeforeFinalizingAsync();
             _lastFilePath = await _pdf.GenerateBillAsync(_bill, "", "", "");
             await _pdf.OpenBillAsync(_lastFilePath);
         }
@@ -370,6 +442,7 @@ public partial class BillPreviewPage : ContentPage
             LoadingOverlay.IsVisible = true;
             try
             {
+                await SaveBillBeforeFinalizingAsync();
                 _lastFilePath = await _pdf.GenerateBillAsync(_bill, "", "", "");
             }
             finally

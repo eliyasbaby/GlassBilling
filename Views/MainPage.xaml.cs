@@ -22,7 +22,7 @@ public partial class MainPage : ContentPage
     }
 
     private async void OnNewBillClicked(object sender, EventArgs e)
-        => await Shell.Current.GoToAsync(nameof(NewBillStep1Page));
+        => await Shell.Current.GoToAsync(nameof(BillingPage));
 
     private async void OnCustomersClicked(object sender, EventArgs e)
         => await Shell.Current.GoToAsync(nameof(CustomersPage));

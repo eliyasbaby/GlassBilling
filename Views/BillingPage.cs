@@ -3,13 +3,13 @@ using GlassBilling.ViewModels;
 
 namespace GlassBilling.Views;
 
-public partial class NewBillStep1Page : ContentPage
+public partial class BillingPage : ContentPage
 {
     private readonly NewBillViewModel _vm;
     private readonly HashSet<BillItemEntry> _hookedEntries = new();
     private Customer? _previousCustomerSelection;
 
-    public NewBillStep1Page(NewBillViewModel vm)
+    public BillingPage(NewBillViewModel vm)
     {
         InitializeComponent();
         _vm = vm;

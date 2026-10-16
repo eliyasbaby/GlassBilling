@@ -7,11 +7,13 @@
     Shell.FlyoutBehavior="Flyout"
     Title="Glass Billing">
 
+    <!-- Logged-in user shown only in the flyout header -->
     <Shell.FlyoutHeader>
-        <Grid BackgroundColor="#5B4FCF" Padding="20" HeightRequest="120">
+        <Grid BackgroundColor="#5B4FCF" Padding="20" HeightRequest="140">
             <VerticalStackLayout VerticalOptions="Center">
                 <Label Text="🪟 Glass Billing" FontSize="22" FontAttributes="Bold" TextColor="White" />
                 <Label Text="Billing Management System" FontSize="13" TextColor="#DDD8FF" />
+                <Label x:Name="LoggedInUserLabel" Text="" FontSize="13" TextColor="#EEE" HorizontalOptions="End" />
             </VerticalStackLayout>
         </Grid>
     </Shell.FlyoutHeader>

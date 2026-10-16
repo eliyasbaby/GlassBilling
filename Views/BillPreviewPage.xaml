@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Invoice Preview"
-    BackgroundColor="#F4F4F4">
+    Background="{StaticResource AppBackgroundBrush}">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="PDF" Clicked="OnGeneratePdfClicked" />
@@ -14,13 +14,13 @@
     <Grid>
         <ScrollView Orientation="Both">
             <VerticalStackLayout Padding="20" HorizontalOptions="Center" Spacing="12">
-                <Border
+                    <Border
                     BackgroundColor="White"
                     Stroke="#DDDDDD"
                     StrokeThickness="1"
                     Padding="0"
                     HorizontalOptions="Center"
-                    MaximumWidthRequest="920"
+                    MaximumWidthRequest="780"
                     Margin="8,0">
                     <VerticalStackLayout x:Name="InvoiceRoot" Padding="18,20,18,16" Spacing="10">
                         <Grid ColumnDefinitions="170,*" Padding="0,0,0,10">
@@ -82,7 +82,7 @@
                                 <Label x:Name="OfficePhoneLabel" FontSize="16" TextColor="Black" />
                                 <Label x:Name="CompanyEmailValueLabel" FontSize="16" TextColor="Black" />
                                 <Label x:Name="CompanyGstinValueLabel" FontSize="16" TextColor="Black" />
-                                <Label Text="Salesman:" FontSize="16" TextColor="Black" />
+                                <Label x:Name="SalesmanLabel" FontSize="16" TextColor="Black" />
                             </VerticalStackLayout>
                         </Grid>
 

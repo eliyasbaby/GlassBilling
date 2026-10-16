@@ -126,6 +126,50 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <!-- Glass Types & Wastage -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Glass Types &amp; Wastage" Style="{StaticResource SectionHeader}" />
+                            <Button
+                                Grid.Column="1"
+                                Text="+ Add"
+                                Style="{StaticResource OutlineButton}"
+                                HeightRequest="36"
+                                Padding="12,0"
+                                Command="{Binding AddGlassTypeCommand}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,110,70" BackgroundColor="#EDE9FF" Padding="8,4">
+                            <Label Grid.Column="0" Text="Glass Type" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" />
+                            <Label Grid.Column="1" Text="Wastage (in)" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                            <Label Grid.Column="2" Text="Edit" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding GlassTypes}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:GlassType">
+                                    <Grid ColumnDefinitions="*,110,70" Padding="8,6">
+                                        <Label Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="14" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding WastageInches, StringFormat='{0:N2}'}" FontSize="13" TextColor="#757575" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Button
+                                            Grid.Column="2"
+                                            Text="Edit"
+                                            BackgroundColor="{StaticResource PrimaryColor}"
+                                            TextColor="White"
+                                            HeightRequest="34"
+                                            CornerRadius="6"
+                                            Padding="8,0"
+                                            FontSize="12"
+                                            CommandParameter="{Binding .}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=EditGlassTypeCommand}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
                 <!-- Backup & Restore -->
                 <Frame Style="{StaticResource CardFrame}">
                     <VerticalStackLayout Spacing="10">
@@ -169,6 +213,31 @@
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
                         <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelThicknessEditCommand}" />
                         <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveThicknessCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+        <!-- Add or edit glass type -->
+        <Grid BackgroundColor="#80000000" IsVisible="{Binding IsEditingGlassType}">
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="16"
+                Padding="20"
+                Margin="20"
+                VerticalOptions="Center">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Glass Type &amp; Wastage" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
+
+                    <Label Text="Glass Type Name" Style="{StaticResource FormLabel}" />
+                    <Entry Text="{Binding EditGlassTypeName}" Placeholder="e.g. Tinted glass" Style="{StaticResource FormEntry}" />
+
+                    <Label Text="Wastage per dimension (inches)" Style="{StaticResource FormLabel}" />
+                    <Entry Text="{Binding EditGlassWastageInches}" Keyboard="Numeric" Style="{StaticResource FormEntry}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
+                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelGlassTypeEditCommand}" />
+                        <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveGlassTypeCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Frame>

@@ -28,6 +28,9 @@ public class Bill
     public double TotalAmount { get; set; }       // SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount
 
     public string Notes { get; set; } = string.Empty;
+    
+    // Who generated the bill (populated at creation/save)
+    public string SalesmanName { get; set; } = string.Empty;
 
     // Navigation (not stored)
     [Ignore] public Customer? Customer { get; set; }

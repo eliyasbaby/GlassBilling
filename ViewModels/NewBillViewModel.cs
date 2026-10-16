@@ -11,7 +11,9 @@ public partial class NewBillViewModel : BaseViewModel
 {
     private readonly DatabaseService _db;
     private readonly PdfService _pdf;
+    private List<GlassType> _glassTypes = new();
     private bool _isInitialized;
+    private Bill? _editingBill;
 
     // ── Step 1 ───────────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<Customer> _customers = new();
@@ -48,6 +50,11 @@ public partial class NewBillViewModel : BaseViewModel
         Title = "New Bill";
     }
 
+    private void UpdateTitle()
+    {
+        Title = IsEditingBill ? "Edit Bill" : "New Bill";
+    }
+
     // Predefined charge names shown on Step 4
     private static readonly string[] PredefinedChargeNames =
     {
@@ -74,6 +81,46 @@ public partial class NewBillViewModel : BaseViewModel
         RefreshExtraChargeLayoutIndexes();
     }
 
+    private void LoadExtraChargesForEditing(IEnumerable<ExtraCharge> savedCharges)
+    {
+        var entries = new List<ExtraChargeEntry>();
+        var byName = new Dictionary<string, ExtraChargeEntry>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var name in PredefinedChargeNames)
+        {
+            var entry = new ExtraChargeEntry
+            {
+                Name = name,
+                Amount = 0
+            };
+            entries.Add(entry);
+            byName[name] = entry;
+        }
+
+        foreach (var charge in savedCharges.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
+        {
+            if (byName.TryGetValue(charge.Name, out var existing))
+            {
+                existing.Amount = charge.Amount;
+                continue;
+            }
+
+            var customEntry = new ExtraChargeEntry
+            {
+                Name = charge.Name,
+                Amount = charge.Amount
+            };
+            entries.Add(customEntry);
+            byName[charge.Name] = customEntry;
+        }
+
+        ExtraCharges.Clear();
+        foreach (var entry in entries)
+            ExtraCharges.Add(entry);
+
+        RefreshExtraChargeLayoutIndexes();
+    }
+
     private void RefreshExtraChargeLayoutIndexes()
     {
         for (int i = 0; i < ExtraCharges.Count; i++)
@@ -88,12 +135,15 @@ public partial class NewBillViewModel : BaseViewModel
 
     public async Task LoadBillForEditingAsync(Bill bill)
     {
+        _editingBill = bill;
         IsEditingBill = true;
         EditingBillId = bill.Id;
+        UpdateTitle();
 
         var allTypes = await _db.GetThicknessTypesAsync(false);
         AvailableThicknessTypes.Clear();
         foreach (var type in allTypes) AvailableThicknessTypes.Add(type);
+        _glassTypes = await _db.GetGlassTypesAsync();
 
         var customers = await _db.GetCustomersAsync();
         RefreshCustomers(customers);
@@ -102,12 +152,25 @@ public partial class NewBillViewModel : BaseViewModel
         Notes = bill.Notes;
         TaxPercent = bill.TaxPercent;
         DiscountAmount = bill.DiscountAmount;
+
+        RestoreBillEntries(bill);
+        LoadExtraChargesForEditing(bill.ExtraCharges);
+        if (ExtraCharges.Count == 0)
+            ResetExtraCharges();
+
+        IsCustomerFormVisible = false;
+        OnPropertyChanged(nameof(BillItemEntries));
+        OnPropertyChanged(nameof(NumberOfThicknessTypes));
+    }
+
+    private void RestoreBillEntries(Bill bill)
+    {
         NumberOfThicknessTypes = Math.Max(1, bill.Items.Count);
         BillItemEntries.Clear();
 
         foreach (var item in bill.Items)
         {
-            var thicknessType = AvailableThicknessTypes.FirstOrDefault(t => t.Id == item.ThicknessTypeId)
+            var matchingType = AvailableThicknessTypes.FirstOrDefault(t => t.Id == item.ThicknessTypeId)
                 ?? AvailableThicknessTypes.FirstOrDefault()
                 ?? new ThicknessType
                 {
@@ -116,9 +179,12 @@ public partial class NewBillViewModel : BaseViewModel
                     PricePerSqFt = item.PricePerSqFt
                 };
 
+            var persistedRate = item.PricePerSqFt;
+            if (Math.Abs(persistedRate) < 0.0001 && Math.Abs(matchingType.PricePerSqFt) > 0.0001)
+                persistedRate = matchingType.PricePerSqFt;
+
             var entry = new BillItemEntry
             {
-                ThicknessType = thicknessType,
                 MeasurementUnit = item.MeasurementUnit,
                 CuttingAllowance = item.CuttingAllowance,
                 Shape = item.Shape,
@@ -127,6 +193,10 @@ public partial class NewBillViewModel : BaseViewModel
 
             foreach (var type in AvailableThicknessTypes)
                 entry.AvailableTypes.Add(type);
+
+            entry.ThicknessType = entry.AvailableTypes.FirstOrDefault(t => t.Id == matchingType.Id) ?? matchingType;
+            entry.Rate = persistedRate;
+            entry.EnsureGlassTypes(_glassTypes, item.GlassDescription);
 
             foreach (var row in item.Measurements)
             {
@@ -144,27 +214,6 @@ public partial class NewBillViewModel : BaseViewModel
 
             BillItemEntries.Add(entry);
         }
-
-        ExtraCharges.Clear();
-        foreach (var charge in bill.ExtraCharges)
-        {
-            ExtraCharges.Add(new ExtraChargeEntry
-            {
-                Name = charge.Name,
-                Amount = charge.Amount,
-                ColumnIndex = ExtraCharges.Count % 4,
-                RowIndex = ExtraCharges.Count / 4,
-                TabIndex = ExtraCharges.Count * 2
-            });
-        }
-
-        if (ExtraCharges.Count == 0)
-            ResetExtraCharges();
-        else
-            RefreshExtraChargeLayoutIndexes();
-
-        IsCustomerFormVisible = false;
-        OnPropertyChanged(nameof(BillItemEntries));
     }
 
     [RelayCommand]
@@ -172,6 +221,7 @@ public partial class NewBillViewModel : BaseViewModel
     {
         IsEditingBill = false;
         EditingBillId = 0;
+        UpdateTitle();
 
         // Reset all state for a fresh bill
         ThicknessSelections.Clear();
@@ -204,9 +254,13 @@ public partial class NewBillViewModel : BaseViewModel
             var customers = await _db.GetCustomersAsync();
             RefreshCustomers(customers);
 
-            var types = await _db.GetThicknessTypesAsync();
+            var types = await _db.GetThicknessTypesAsync(false);
             AvailableThicknessTypes.Clear();
             foreach (var t in types) AvailableThicknessTypes.Add(t);
+            _glassTypes = await _db.GetGlassTypesAsync();
+
+            if (_editingBill is not null)
+                RestoreBillEntries(_editingBill);
 
             if (SelectedCustomer is null)
                 SelectedCustomer = Customers.FirstOrDefault();
@@ -220,6 +274,7 @@ public partial class NewBillViewModel : BaseViewModel
         var typesList = await _db.GetThicknessTypesAsync();
         AvailableThicknessTypes.Clear();
         foreach (var t in typesList) AvailableThicknessTypes.Add(t);
+        _glassTypes = await _db.GetGlassTypesAsync();
 
         if (!_isInitialized)
         {
@@ -339,8 +394,11 @@ public partial class NewBillViewModel : BaseViewModel
                 ThicknessType = AvailableThicknessTypes.FirstOrDefault() ?? new ThicknessType(),
                 MeasurementUnit = "mm",
                 CuttingAllowance = 0,
-                Shape = "Block"
+                Shape = "Block",
+                Rate = AvailableThicknessTypes.FirstOrDefault()?.PricePerSqFt ?? 0
             };
+
+            entry.EnsureGlassTypes(_glassTypes);
 
             foreach (var type in AvailableThicknessTypes)
                 entry.AvailableTypes.Add(type);
@@ -352,112 +410,13 @@ public partial class NewBillViewModel : BaseViewModel
         OnPropertyChanged(nameof(BillItemEntries));
     }
 
-    [RelayCommand]
-    private async Task GoToStep2Async()
-    {
-        if (SelectedCustomer is null)
-        {
-            await Shell.Current.DisplayAlert("Validation", "Please select a customer.", "OK");
-            return;
-        }
-        if (NumberOfThicknessTypes < 1 || NumberOfThicknessTypes > 20)
-        {
-            await Shell.Current.DisplayAlert("Validation", "Enter a number between 1 and 20.", "OK");
-            return;
-        }
-
-        var types = await _db.GetThicknessTypesAsync();
-        AvailableThicknessTypes.Clear();
-        foreach (var t in types) AvailableThicknessTypes.Add(t);
-
-        ThicknessSelections.Clear();
-        for (int i = 0; i < NumberOfThicknessTypes; i++)
-        {
-            ThicknessSelections.Add(new ThicknessTypeSelection
-            {
-                Index          = i + 1,
-                AvailableTypes = AvailableThicknessTypes,
-                SelectedType   = AvailableThicknessTypes.FirstOrDefault()
-            });
-        }
-
-        await Shell.Current.GoToAsync(nameof(NewBillStep2Page));
-    }
-
-    // ── Step 2 ───────────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task GoToStep3Async()
-    {
-        if (ThicknessSelections.Any(s => s.SelectedType is null))
-        {
-            await Shell.Current.DisplayAlert("Validation", "Please select all thickness types.", "OK");
-            return;
-        }
-
-        BillItemEntries.Clear();
-        foreach (var sel in ThicknessSelections)
-        {
-            var entry = new BillItemEntry
-            {
-                ThicknessType    = sel.SelectedType!,
-                MeasurementUnit  = "mm",
-                CuttingAllowance = 0,
-                Shape            = "Block"
-            };
-            entry.AddRow();
-            BillItemEntries.Add(entry);
-        }
-
-        CurrentThicknessIndex = 0;
-        CurrentEntry = BillItemEntries[0];
-
-        await Shell.Current.GoToAsync(nameof(NewBillStep3Page));
-    }
-
-    // ── Step 3 ───────────────────────────────────────────────────────────────
-
     [RelayCommand] private void AddMeasurementRow()    => CurrentEntry?.AddRow();
     [RelayCommand] private void RemoveLastRow()        => CurrentEntry?.RemoveLastRow();
     [RelayCommand] private void RemoveRow(MeasurementEntryRow row) => CurrentEntry?.RemoveRow(row);
     [RelayCommand] private void AddRowToEntry(BillItemEntry entry) => entry.AddRow();
     [RelayCommand] private void RemoveLastRowFromEntry(BillItemEntry entry) => entry.RemoveLastRow();
 
-    [RelayCommand]
-    private async Task NextThicknessOrFinishAsync()
-    {
-        if (CurrentEntry is null) return;
-
-        if (!CurrentEntry.HasValidRows)
-        {
-            await Shell.Current.DisplayAlert("Validation",
-                "Enter at least one measurement with Length and Width > 0.", "OK");
-            return;
-        }
-
-        if (CurrentThicknessIndex < BillItemEntries.Count - 1)
-        {
-            CurrentThicknessIndex++;
-            CurrentEntry = BillItemEntries[CurrentThicknessIndex];
-        }
-        else
-        {
-            // All thicknesses done → go to Step 4 (Extra Charges)
-            await Shell.Current.GoToAsync(nameof(ExtraChargesPage));
-        }
-    }
-
-    [RelayCommand]
-    private void PreviousThickness()
-    {
-        if (CurrentThicknessIndex > 0)
-        {
-            CurrentThicknessIndex--;
-            CurrentEntry = BillItemEntries[CurrentThicknessIndex];
-        }
-    }
-
-    // ── Step 4 – Extra Charges ────────────────────────────────────────────────
+    // ── Extra Charges ────────────────────────────────────────────────
 
     [RelayCommand]
     private void AddExtraCharge()
@@ -527,6 +486,19 @@ public partial class NewBillViewModel : BaseViewModel
                 BillNumber      = existing?.BillNumber ?? string.Empty
             };
 
+            // Populate salesman name from settings or fallback to environment user
+            try
+            {
+                var s = await _db.GetSettingsAsync();
+                bill.SalesmanName = !string.IsNullOrWhiteSpace(s?.SalesmanName)
+                    ? s.SalesmanName
+                    : Environment.UserName;
+            }
+            catch
+            {
+                bill.SalesmanName = Environment.UserName;
+            }
+
             foreach (var entry in BillItemEntries)
             {
                 var billItem = new BillItem
@@ -536,22 +508,14 @@ public partial class NewBillViewModel : BaseViewModel
                     GlassDescription = entry.GlassDescription,
                     MeasurementUnit  = entry.MeasurementUnit,
                     CuttingAllowance = entry.CuttingAllowance,
-                    PricePerSqFt     = entry.ThicknessType.PricePerSqFt,
+                    PricePerSqFt     = entry.Rate,
                     Shape            = entry.Shape,
                 };
 
                 int rowNum = 1;
                 foreach (var r in entry.Rows.Where(r => r.Length > 0 && r.Width > 0))
                 {
-                    // Add cutting allowance and 2" wastage (converted to the current unit)
-                    double extra = entry.MeasurementUnit switch
-                    {
-                        "mm"   => 2.0 * 25.4,
-                        "cm"   => 2.0 * 2.54,
-                        "inch" => 2.0,
-                        "feet" => 2.0 / 12.0,
-                        _       => 2.0 * 25.4
-                    };
+                    double extra = entry.WastageInMeasurementUnit;
 
                     double cl   = r.Length + entry.CuttingAllowance + extra;
                     double cw   = r.Width  + entry.CuttingAllowance + extra;
@@ -590,8 +554,9 @@ public partial class NewBillViewModel : BaseViewModel
 
             IsEditingBill = false;
             EditingBillId = 0;
+            UpdateTitle();
 
-            var navParams = new Dictionary<string, object> { { "Bill", saved! } };
+            var navParams = new Dictionary<string, object> { { "BillId", billId } };
             await Shell.Current.GoToAsync(nameof(BillPreviewPage), navParams);
         }
         finally { IsBusy = false; }
@@ -609,14 +574,66 @@ public partial class ThicknessTypeSelection : ObservableObject
 
 public partial class BillItemEntry : ObservableObject
 {
+    private readonly Dictionary<string, double> _wastageByGlassType = new(StringComparer.OrdinalIgnoreCase);
+
     [ObservableProperty] private ThicknessType _thicknessType = new();
     [ObservableProperty] private string _measurementUnit  = "mm";
     [ObservableProperty] private double _cuttingAllowance = 0;
+    private double _rate;
     [ObservableProperty] private string _shape            = "Block";
     [ObservableProperty] private string _glassDescription = "Clear glass";
 
+    public double Rate
+    {
+        get => _rate;
+        set
+        {
+            if (SetProperty(ref _rate, value))
+                NotifyTotalChanged();
+        }
+    }
+
     public ObservableCollection<ThicknessType> AvailableTypes { get; } = new();
+    public ObservableCollection<string> AvailableGlassTypes { get; } = new();
     public ObservableCollection<MeasurementEntryRow> Rows { get; } = new();
+
+    public void EnsureGlassTypes(IEnumerable<GlassType> glassTypes, string? currentValue = null)
+    {
+        AvailableGlassTypes.Clear();
+        _wastageByGlassType.Clear();
+        foreach (var glassType in glassTypes)
+        {
+            if (string.IsNullOrWhiteSpace(glassType.Name))
+                continue;
+
+            if (!AvailableGlassTypes.Contains(glassType.Name))
+                AvailableGlassTypes.Add(glassType.Name);
+            _wastageByGlassType[glassType.Name] = glassType.WastageInches;
+        }
+
+        if (!string.IsNullOrWhiteSpace(currentValue) && !AvailableGlassTypes.Contains(currentValue))
+        {
+            AvailableGlassTypes.Add(currentValue);
+            _wastageByGlassType[currentValue] = 2;
+        }
+
+        if (!string.IsNullOrWhiteSpace(currentValue))
+            GlassDescription = currentValue;
+        else if (!AvailableGlassTypes.Contains(GlassDescription))
+            GlassDescription = AvailableGlassTypes.FirstOrDefault() ?? string.Empty;
+    }
+
+    private double SelectedWastageInches =>
+        _wastageByGlassType.TryGetValue(GlassDescription, out var wastageInches) ? wastageInches : 2;
+
+    public double WastageInMeasurementUnit => MeasurementUnit switch
+    {
+        "mm" => SelectedWastageInches * 25.4,
+        "cm" => SelectedWastageInches * 2.54,
+        "inch" => SelectedWastageInches,
+        "feet" => SelectedWastageInches / 12.0,
+        _ => SelectedWastageInches * 25.4
+    };
 
     public bool HasValidRows => Rows.Any(r => r.Length > 0 && r.Width > 0);
     public double CalculatedTotal => CalcTotal();
@@ -626,25 +643,27 @@ public partial class BillItemEntry : ObservableObject
         double area = Rows
             .Where(r => r.Length > 0 && r.Width > 0)
             .Sum(r => {
-                double extra = MeasurementUnit switch
-                {
-                    "mm"   => 2.0 * 25.4,
-                    "cm"   => 2.0 * 2.54,
-                    "inch" => 2.0,
-                    "feet" => 2.0 / 12.0,
-                    _       => 2.0 * 25.4
-                };
+                double extra = WastageInMeasurementUnit;
 
                 double cl = r.Length + CuttingAllowance + extra;
                 double cw = r.Width  + CuttingAllowance + extra;
                 return MeasurementRow.CalcAreaSqFt(cl, cw, MeasurementUnit, r.Quantity);
             });
-        return area * ThicknessType.PricePerSqFt;
+        return area * Rate;
     }
 
-    partial void OnThicknessTypeChanged(ThicknessType value) => NotifyTotalChanged();
+    partial void OnThicknessTypeChanged(ThicknessType value)
+    {
+        if (value is null)
+            return;
+
+        Rate = value.PricePerSqFt;
+        NotifyTotalChanged();
+    }
+
     partial void OnMeasurementUnitChanged(string value) => NotifyTotalChanged();
     partial void OnCuttingAllowanceChanged(double value) => NotifyTotalChanged();
+    partial void OnGlassDescriptionChanged(string value) => NotifyTotalChanged();
 
     public void AddRow()
     {

@@ -18,49 +18,65 @@
         <CollectionView
             Grid.Row="1"
             ItemsSource="{Binding Bills}"
-            Margin="12,0">
+            Margin="8,0">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:Bill">
-                    <Frame Style="{StaticResource CardFrame}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <VerticalStackLayout Grid.Column="0" Spacing="3">
-                                <Label Text="{Binding BillNumber}" FontAttributes="Bold" FontSize="15"
+                    <Frame Padding="10"
+                           Margin="0,3"
+                           CornerRadius="10"
+                           HasShadow="False"
+                           BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="White">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding BillNumber}"
+                                       FontAttributes="Bold"
+                                       FontSize="14"
                                        TextColor="{StaticResource PrimaryColor}" />
-                                <Label Text="{Binding Customer.Name}" FontSize="14" TextColor="#212121" />
-                                <Label Text="{Binding Customer.Location}" FontSize="12" TextColor="#9E9E9E" />
-                                <Label Text="{Binding FormattedDate}" FontSize="12" TextColor="#757575" />
+                                <Label Text="{Binding Customer.Name}"
+                                       FontSize="13"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="{Binding Customer.Location}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource TextSecondary}" />
+                                <Label Text="{Binding FormattedDate}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource TextSecondary}" />
                             </VerticalStackLayout>
-                            <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="6">
-                                <Label
-                                    Text="{Binding FormattedTotal}"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{StaticResource PrimaryColor}"
-                                    HorizontalOptions="End" />
-                                <Button
-                                    Text="View"
-                                    Style="{StaticResource PrimaryButton}"
-                                    HeightRequest="36"
-                                    Padding="14,0"
-                                    FontSize="13"
-                                    CommandParameter="{Binding .}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=ViewBillCommand}" />
-                                <Button
-                                    Text="Edit"
-                                    Style="{StaticResource OutlineButton}"
-                                    HeightRequest="32"
-                                    Padding="10,0"
-                                    FontSize="12"
-                                    CommandParameter="{Binding .}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=EditBillCommand}" />
-                                <Button
-                                    Text="Delete"
-                                    Style="{StaticResource DangerButton}"
-                                    HeightRequest="32"
-                                    Padding="10,0"
-                                    FontSize="12"
-                                    CommandParameter="{Binding .}"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=DeleteBillCommand}" />
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="6" HorizontalOptions="End">
+                                <Label Text="{Binding FormattedTotal}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       HorizontalOptions="End" />
+
+                                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="6">
+                                    <Button Grid.Column="0"
+                                            Text="View"
+                                            Style="{StaticResource PrimaryButton}"
+                                            HeightRequest="30"
+                                            Padding="10,0"
+                                            FontSize="11"
+                                            CommandParameter="{Binding .}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=ViewBillCommand}" />
+                                    <Button Grid.Column="1"
+                                            Text="Edit"
+                                            Style="{StaticResource OutlineButton}"
+                                            HeightRequest="30"
+                                            Padding="10,0"
+                                            FontSize="11"
+                                            CommandParameter="{Binding .}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=EditBillCommand}" />
+                                    <Button Grid.Column="2"
+                                            Text="Delete"
+                                            Style="{StaticResource DangerButton}"
+                                            HeightRequest="30"
+                                            Padding="10,0"
+                                            FontSize="11"
+                                            CommandParameter="{Binding .}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BillHistoryViewModel}}, Path=DeleteBillCommand}" />
+                                </Grid>
                             </VerticalStackLayout>
                         </Grid>
                     </Frame>

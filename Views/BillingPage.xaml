@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="GlassBilling.Views.NewBillStep1Page"
+    x:Class="GlassBilling.Views.BillingPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:GlassBilling.ViewModels"
-    Title="New Bill"
-    BackgroundColor="{StaticResource BackgroundColor}">
+    Title="{Binding Title}"
+    Background="{StaticResource AppBackgroundBrush}">
 
-    <Grid Padding="30,0">
+    <Grid Padding="24,0">
         <ScrollView HorizontalOptions="Fill" VerticalOptions="Fill">
-            <VerticalStackLayout Padding="0" Spacing="14" MaximumWidthRequest="980" HorizontalOptions="Fill" WidthRequest="-1">
+            <VerticalStackLayout Padding="0" Spacing="16" MaximumWidthRequest="1200" HorizontalOptions="Center" WidthRequest="-1">
 
                 <Frame BackgroundColor="White" CornerRadius="12" Padding="16" HasShadow="True">
                     <VerticalStackLayout Spacing="10">
@@ -25,7 +25,7 @@
                                 BackgroundColor="White"
                                 TextColor="{StaticResource TextPrimary}" />
 
-                        <Grid ColumnDefinitions="*,140" ColumnSpacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="Number of Thickness Types" Style="{StaticResource FormLabel}" />
                                 <Entry Text="{Binding NumberOfThicknessTypes, Mode=TwoWay}"
@@ -37,6 +37,7 @@
                                     Text="Apply"
                                     Style="{StaticResource OutlineButton}"
                                     HeightRequest="44"
+                                    WidthRequest="90"
                                     VerticalOptions="End"
                                     Clicked="OnApplyThicknessClicked"
                                     Command="{Binding RebuildBillItemEntriesCommand}" />
@@ -52,25 +53,17 @@
                                     <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
                                         <VerticalStackLayout Grid.Column="0" Spacing="2">
                                             <Label Text="Glass Type" Style="{StaticResource FormLabel}" />
-                                            <Picker SelectedItem="{Binding GlassDescription, Mode=TwoWay}"
+                                            <Picker ItemsSource="{Binding AvailableGlassTypes}"
+                                                    SelectedItem="{Binding GlassDescription, Mode=TwoWay}"
                                                     BackgroundColor="White"
                                                     HeightRequest="34"
                                                     FontSize="13"
                                                     TextColor="{StaticResource TextPrimary}"
-                                                    SelectedIndexChanged="OnAnySelectionChanged">
-                                                <Picker.ItemsSource>
-                                                    <x:Array Type="{x:Type x:String}">
-                                                        <x:String>Clear glass</x:String>
-                                                        <x:String>Cooling glass</x:String>
-                                                        <x:String>Brown glass</x:String>
-                                                        <x:String>Fluted glass</x:String>
-                                                    </x:Array>
-                                                </Picker.ItemsSource>
-                                            </Picker>
+                                                    SelectedIndexChanged="OnAnySelectionChanged" />
                                         </VerticalStackLayout>
                                     </Grid>
 
-                                    <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
+                                    <Grid ColumnDefinitions="*,180" ColumnSpacing="10">
                                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                                             <Label Text="Select Thickness Types" Style="{StaticResource FormLabel}" />
                                             <Picker ItemsSource="{Binding AvailableTypes}"
@@ -98,6 +91,17 @@
                                             </Picker>
                                         </VerticalStackLayout>
                                     </Grid>
+
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Item Rate (per sq ft)" Style="{StaticResource FormLabel}" />
+                                        <Entry Text="{Binding Rate, Mode=TwoWay}"
+                                               Keyboard="Numeric"
+                                               HorizontalTextAlignment="End"
+                                                 HorizontalOptions="Start"
+                                                 WidthRequest="180"
+                                               Style="{StaticResource FormEntry}"
+                                               TextChanged="OnAnyValueChanged" />
+                                    </VerticalStackLayout>
 
                                     <!-- <Grid ColumnDefinitions="32,*,*,70,42"
                                           BackgroundColor="{StaticResource PrimaryColor}"
@@ -228,7 +232,7 @@
 
                 <Frame BackgroundColor="White" CornerRadius="12" Padding="16" HasShadow="True">
                     <VerticalStackLayout Spacing="10">
-                        <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
+                        <Grid ColumnDefinitions="*,170" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="Tax / GST (%)" Style="{StaticResource FormLabel}" />
                                 <Label Text="Applied to subtotal + extras"
@@ -243,7 +247,7 @@
                                    TextChanged="OnAnyValueChanged" />
                         </Grid>
 
-                        <Grid ColumnDefinitions="*,150" ColumnSpacing="10">
+                        <Grid ColumnDefinitions="*,170" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="Discount" Style="{StaticResource FormLabel}" />
                                 <Label Text="Optional amount or %"
@@ -298,11 +302,14 @@
                     </VerticalStackLayout>
                 </Frame>
 
-                <Grid Padding="0,8,0,0" HorizontalOptions="Center">
+                <Grid Padding="0,8,0,12" HorizontalOptions="Center">
                     <Button Text="Generate Bill"
                             Style="{StaticResource PrimaryButton}"
-                            Padding="18,0"
+                            Padding="24,0"
                             MinimumWidthRequest="180"
+                            MaximumWidthRequest="260"
+                            WidthRequest="200"
+                            HorizontalOptions="Center"
                             Clicked="OnGenerateBillClicked" />
                 </Grid>
 

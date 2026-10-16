@@ -43,7 +43,7 @@ public partial class BillHistoryViewModel : BaseViewModel
     {
         var full = await _db.GetBillWithDetailsAsync(bill.Id);
         if (full is null) return;
-        var navParams = new Dictionary<string, object> { { "Bill", full } };
+        var navParams = new Dictionary<string, object> { { "BillId", full.Id } };
         await Shell.Current.GoToAsync(nameof(BillPreviewPage), navParams);
     }
 
@@ -54,7 +54,7 @@ public partial class BillHistoryViewModel : BaseViewModel
         if (full is null) return;
 
         await _newBillVm.LoadBillForEditingAsync(full);
-        await Shell.Current.GoToAsync(nameof(NewBillStep1Page));
+        await Shell.Current.GoToAsync(nameof(BillingPage));
     }
 
     [RelayCommand]
