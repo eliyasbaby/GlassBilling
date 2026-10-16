@@ -14,6 +14,7 @@
                 <Label Text="🪟 Glass Billing" FontSize="22" FontAttributes="Bold" TextColor="White" />
                 <Label Text="Billing Management System" FontSize="13" TextColor="#DDD8FF" />
                 <Label x:Name="LoggedInUserLabel" Text="" FontSize="13" TextColor="#EEE" HorizontalOptions="End" />
+                <Label x:Name="AppVersionLabel" Text="" FontSize="12" TextColor="#DDD8FF" HorizontalOptions="End" />
             </VerticalStackLayout>
         </Grid>
     </Shell.FlyoutHeader>

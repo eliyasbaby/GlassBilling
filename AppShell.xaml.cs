@@ -8,6 +8,7 @@ public partial class AppShell : Shell
     public AppShell(IServiceProvider services)
     {
         InitializeComponent();
+        AppVersionLabel.Text = $"Version {AppInfo.Current.VersionString}";
 
         // Resolve Shell pages through DI because pages use constructor injection.
         HomeContent.Content = services.GetRequiredService<MainPage>();
