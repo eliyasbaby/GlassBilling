@@ -306,6 +306,9 @@
                     WidthRequest="300"
                     HeightRequest="170"
                     MinimumHeightRequest="170">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnReportsClicked" />
+                    </Frame.GestureRecognizers>
                     <Grid RowDefinitions="*,Auto">
                         <Label Text="&#xE74E;"
                                FontFamily="Segoe MDL2 Assets"

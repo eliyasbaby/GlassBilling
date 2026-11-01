@@ -219,9 +219,12 @@ public partial class NewBillViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadStep1Async()
     {
+        _editingBill = null;
         IsEditingBill = false;
         EditingBillId = 0;
         UpdateTitle();
+        CurrentEntry = null;
+        CurrentThicknessIndex = 0;
 
         // Reset all state for a fresh bill
         ThicknessSelections.Clear();
@@ -229,6 +232,10 @@ public partial class NewBillViewModel : BaseViewModel
         ResetExtraCharges();
         Notes = string.Empty;
         DiscountAmount = 0;
+        NewCustomerName = string.Empty;
+        NewCustomerLocation = string.Empty;
+        NewCustomerPhone = string.Empty;
+        NewCustomerAddress = string.Empty;
 
         var list = await _db.GetCustomersAsync();
         RefreshCustomers(list);
@@ -451,6 +458,18 @@ public partial class NewBillViewModel : BaseViewModel
     {
         if (IsBusy) return;
 
+        if (EditingBillId == 0)
+        {
+            if (!WorkstationCodeSettings.IsValid(WorkstationCodeSettings.GetCode()))
+            {
+                await Shell.Current.DisplayAlert(
+                    "Workstation Code Required",
+                    "Set a valid, unique workstation code in Settings before creating a new bill.",
+                    "OK");
+                return;
+            }
+        }
+
         if (SelectedCustomer is null)
         {
             await Shell.Current.DisplayAlert("Validation", "Please select a customer.", "OK");
@@ -482,6 +501,7 @@ public partial class NewBillViewModel : BaseViewModel
                 BillDate        = DateTime.Now,
                 TaxPercent      = TaxPercent,
                 DiscountAmount  = DiscountAmount,
+                IsConfirmed     = existing?.IsConfirmed ?? false,
                 Notes           = Notes,
                 BillNumber      = existing?.BillNumber ?? string.Empty
             };

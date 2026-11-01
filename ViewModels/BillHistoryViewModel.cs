@@ -9,12 +9,20 @@ namespace GlassBilling.ViewModels;
 
 public partial class BillHistoryViewModel : BaseViewModel
 {
+    private const int PageSize = 20;
     private readonly DatabaseService _db;
     private readonly PdfService _pdf;
     private readonly NewBillViewModel _newBillVm;
+    private CancellationTokenSource? _searchDebounce;
 
     [ObservableProperty] private ObservableCollection<Bill> _bills = new();
     [ObservableProperty] private string _searchText = string.Empty;
+    [ObservableProperty] private int _currentPage = 1;
+    [ObservableProperty] private int _totalPages = 1;
+    [ObservableProperty] private int _totalBillCount;
+    [ObservableProperty] private string _pageStatus = "Page 1 of 1";
+    [ObservableProperty] private bool _canGoPrevious;
+    [ObservableProperty] private bool _canGoNext;
 
     public BillHistoryViewModel(DatabaseService db, PdfService pdf, NewBillViewModel newBillVm)
     {
@@ -31,11 +39,41 @@ public partial class BillHistoryViewModel : BaseViewModel
         IsBusy = true;
         try
         {
-            var list = await _db.GetBillsAsync();
+            var result = await _db.GetBillsPageAsync(CurrentPage, PageSize, SearchText);
+            TotalBillCount = result.TotalCount;
+            TotalPages = Math.Max(1, (TotalBillCount + PageSize - 1) / PageSize);
+
+            if (CurrentPage > TotalPages)
+            {
+                CurrentPage = TotalPages;
+                result = await _db.GetBillsPageAsync(CurrentPage, PageSize, SearchText);
+            }
+
             Bills.Clear();
-            foreach (var b in list) Bills.Add(b);
+            foreach (var bill in result.Bills)
+                Bills.Add(bill);
+
+            PageStatus = $"Page {CurrentPage} of {TotalPages} ({TotalBillCount} bills)";
+            CanGoPrevious = CurrentPage > 1;
+            CanGoNext = CurrentPage < TotalPages;
         }
         finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task PreviousPageAsync()
+    {
+        if (!CanGoPrevious) return;
+        CurrentPage--;
+        await LoadBillsAsync();
+    }
+
+    [RelayCommand]
+    private async Task NextPageAsync()
+    {
+        if (!CanGoNext) return;
+        CurrentPage++;
+        await LoadBillsAsync();
     }
 
     [RelayCommand]
@@ -54,7 +92,15 @@ public partial class BillHistoryViewModel : BaseViewModel
         if (full is null) return;
 
         await _newBillVm.LoadBillForEditingAsync(full);
-        await Shell.Current.GoToAsync(nameof(BillingPage));
+        await Shell.Current.GoToAsync($"//{nameof(BillingPage)}");
+    }
+
+    [RelayCommand]
+    private async Task ToggleConfirmationAsync(Bill bill)
+    {
+        var updated = await _db.UpdateBillConfirmationAsync(bill.Id, !bill.IsConfirmed);
+        if (updated > 0)
+            await LoadBillsAsync();
     }
 
     [RelayCommand]
@@ -68,18 +114,24 @@ public partial class BillHistoryViewModel : BaseViewModel
         await LoadBillsAsync();
     }
 
-    partial void OnSearchTextChanged(string value) => FilterBills(value);
-
-    private async void FilterBills(string query)
+    partial void OnSearchTextChanged(string value)
     {
-        var all = await _db.GetBillsAsync();
-        var filtered = string.IsNullOrWhiteSpace(query)
-            ? all
-            : all.Where(b =>
-                (b.BillNumber?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (b.Customer?.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+        _searchDebounce?.Cancel();
+        _searchDebounce?.Dispose();
+        _searchDebounce = new CancellationTokenSource();
+        _ = ReloadAfterSearchAsync(_searchDebounce.Token);
+    }
 
-        Bills.Clear();
-        foreach (var b in filtered) Bills.Add(b);
+    private async Task ReloadAfterSearchAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(300, cancellationToken);
+            CurrentPage = 1;
+            await LoadBillsAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 }

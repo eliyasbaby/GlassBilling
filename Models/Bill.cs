@@ -27,6 +27,8 @@ public class Bill
 
     public double TotalAmount { get; set; }       // SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount
 
+    public bool IsConfirmed { get; set; }
+
     public string Notes { get; set; } = string.Empty;
     
     // Who generated the bill (populated at creation/save)
@@ -39,6 +41,7 @@ public class Bill
 
     [Ignore] public string FormattedDate  => BillDate.ToString("dd/MM/yyyy");
     [Ignore] public string FormattedTotal => $"₹{TotalAmount:N2}";
+    [Ignore] public string ConfirmationStatus => IsConfirmed ? "Confirmed" : "Quote";
 
     /// <summary>Recalculate SubTotal, TaxAmount, TotalAmount from current items/extra charges</summary>
     public void Recalculate()

@@ -31,8 +31,16 @@
         <ShellContent x:Name="BillHistoryContent" Route="BillHistoryPage" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Reports">
+        <ShellContent x:Name="ReportsContent" Route="ReportsPage" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Settings">
         <ShellContent x:Name="SettingsContent" Route="SettingsPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Shell.FlyoutItemIsVisible="False">
+        <ShellContent x:Name="BillingContent" Route="BillingPage" />
     </FlyoutItem>
 
 </Shell>

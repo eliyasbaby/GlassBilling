@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="GlassBilling.Views.ReportsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    xmlns:models="clr-namespace:GlassBilling.Models"
+    x:DataType="vm:ReportsViewModel"
+    Title="Reports"
+    Background="{StaticResource AppBackgroundBrush}">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="10">
+            <SearchBar Placeholder="Search bill or customer..."
+                       Text="{Binding SearchText}"
+                       BackgroundColor="White" />
+
+            <FlexLayout Direction="Row"
+                        Wrap="Wrap"
+                        AlignItems="End"
+                        JustifyContent="Start">
+                <VerticalStackLayout Spacing="2" Margin="0,0,12,0">
+                    <Label Text="From date"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextSecondary}" />
+                    <DatePicker Date="{Binding StartDate, Mode=TwoWay}"
+                                MaximumDate="{Binding EndDate}"
+                                HeightRequest="44"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource TextPrimary}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2" Margin="0,0,12,0">
+                    <Label Text="To date"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextSecondary}" />
+                    <DatePicker Date="{Binding EndDate, Mode=TwoWay}"
+                                MinimumDate="{Binding StartDate}"
+                                HeightRequest="44"
+                                BackgroundColor="White"
+                                TextColor="{StaticResource TextPrimary}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2" Margin="0,0,12,0">
+                    <Label Text="Bill status"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextSecondary}" />
+                        <Picker ItemsSource="{Binding BillFilters}"
+                            SelectedItem="{Binding SelectedFilter, Mode=TwoWay}"
+                            Style="{StaticResource FormPicker}"
+                            HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </FlexLayout>
+
+            <Border Background="White"
+                    Stroke="{StaticResource BorderColor}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 6"
+                    Padding="16,12">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="REVENUE"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Label Text="{Binding ConfirmedRevenue, StringFormat='₹{0:N2}'}"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource SuccessColor}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1"
+                           Text="{Binding ShownBillCount, StringFormat='{0} bills'}"
+                           FontSize="13"
+                           TextColor="{StaticResource TextSecondary}"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Bills}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Bill">
+                    <Border Background="White"
+                            Stroke="{StaticResource BorderColor}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6"
+                            Padding="12"
+                            Margin="0,0,0,8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="{Binding BillNumber}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryColor}" />
+                                <Label Text="{Binding Customer.Name}"
+                                       FontSize="13"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="{Binding FormattedDate}"
+                                       FontSize="11"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="3" HorizontalOptions="End" VerticalOptions="Center">
+                                <Label Text="{Binding FormattedTotal}"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       HorizontalOptions="End" />
+                                <Label Text="{Binding ConfirmationStatus}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#B45309"
+                                       HorizontalOptions="End">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsConfirmed}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource SuccessColor}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="No bills match this report."
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource TextSecondary}" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <ActivityIndicator Grid.RowSpan="2"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           Color="{StaticResource PrimaryColor}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

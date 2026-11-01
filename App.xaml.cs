@@ -5,6 +5,7 @@ public partial class App : Application
     public App(IServiceProvider services)
     {
         InitializeComponent();
+        var logger = services.GetRequiredService<GlassBilling.Services.AppLogService>();
 
         try
         {
@@ -12,6 +13,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
+            _ = logger.ErrorAsync("Application startup failed.", ex);
             System.Diagnostics.Debug.WriteLine($"STARTUP CRASH: {ex}");
             MainPage = new ContentPage
             {

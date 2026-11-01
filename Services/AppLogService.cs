@@ -33,8 +33,9 @@ public sealed class AppLogService
 
             await File.AppendAllTextAsync(filePath, entry);
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to write app log to '{_logDirectory}': {ex}");
         }
         finally
         {

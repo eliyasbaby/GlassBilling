@@ -14,14 +14,12 @@ public partial class AppShell : Shell
         HomeContent.Content = services.GetRequiredService<MainPage>();
         CustomersContent.Content = services.GetRequiredService<CustomersPage>();
         BillHistoryContent.Content = services.GetRequiredService<BillHistoryPage>();
+        ReportsContent.Content = services.GetRequiredService<ReportsPage>();
         SettingsContent.Content = services.GetRequiredService<SettingsPage>();
+        BillingContent.Content = services.GetRequiredService<BillingPage>();
 
         // Register routes for navigation
-        Routing.RegisterRoute(nameof(BillingPage), typeof(BillingPage));
         Routing.RegisterRoute(nameof(BillPreviewPage), typeof(BillPreviewPage));
-        Routing.RegisterRoute(nameof(CustomersPage), typeof(CustomersPage));
-        Routing.RegisterRoute(nameof(BillHistoryPage), typeof(BillHistoryPage));
-        Routing.RegisterRoute(nameof(SettingsPage), typeof(SettingsPage));
     }
 
     protected override void OnParentSet()
