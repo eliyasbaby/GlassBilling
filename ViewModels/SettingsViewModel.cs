@@ -19,6 +19,7 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private string _companyEmail   = string.Empty;
     [ObservableProperty] private double _defaultTax     = 0;
     [ObservableProperty] private string _companyGstin = string.Empty;
+    [ObservableProperty] private string _workstationCode = string.Empty;
 
     // Bank details
     [ObservableProperty] private string _bankName    = string.Empty;
@@ -53,6 +54,7 @@ public partial class SettingsViewModel : BaseViewModel
         try
         {
             var s = await _db.GetSettingsAsync();
+            WorkstationCode = WorkstationCodeSettings.GetCode();
             CompanyName = s.CompanyName; CompanyAddress = s.CompanyAddress;
             CompanyPhone = s.CompanyPhone; CompanyEmail = s.CompanyEmail; 
             CompanyGstin = s.CompanyGstin;DefaultTax = s.DefaultTax;
@@ -71,6 +73,7 @@ public partial class SettingsViewModel : BaseViewModel
             CompanyAddress = Preferences.Get("company_address", "123, Glass Street, Industrial Area, City – 600001");
             CompanyPhone   = Preferences.Get("company_phone",   "+91 98765 43210");
             CompanyEmail   = Preferences.Get("company_email",   "info@glassworks.com");
+            CompanyGstin   = Preferences.Get("company_gstin",    string.Empty);
             DefaultTax     = double.TryParse(Preferences.Get("default_tax", "18"), out var t) ? t : 18;
 
             BankName    = Preferences.Get("bank_name",    "State Bank of India");
@@ -86,6 +89,24 @@ public partial class SettingsViewModel : BaseViewModel
                 "4. Breakage during transport is not our responsibility.\n" +
                 "5. Please check material carefully at the time of delivery.");
         }
+    }
+
+    [RelayCommand]
+    private async Task SaveWorkstationCodeAsync()
+    {
+        var code = WorkstationCodeSettings.Normalize(WorkstationCode);
+        if (!WorkstationCodeSettings.IsValid(code))
+        {
+            await Shell.Current.DisplayAlert(
+                "Invalid Workstation Code",
+                "Enter one letter from A to Z, and use a different letter on each workstation.",
+                "OK");
+            return;
+        }
+
+        WorkstationCodeSettings.SetCode(code);
+        WorkstationCode = code;
+        await Shell.Current.DisplayAlert("Saved", "Workstation code saved.", "OK");
     }
 
     [RelayCommand]
@@ -111,6 +132,7 @@ public partial class SettingsViewModel : BaseViewModel
         Preferences.Set("company_address", CompanyAddress.Trim());
         Preferences.Set("company_phone",   CompanyPhone.Trim());
         Preferences.Set("company_email",   CompanyEmail.Trim());
+        Preferences.Set("company_gstin",   CompanyGstin.Trim());
         Preferences.Set("default_tax",     DefaultTax.ToString());
 
         var s = await _db.GetSettingsAsync();
@@ -118,6 +140,7 @@ public partial class SettingsViewModel : BaseViewModel
         s.CompanyAddress = CompanyAddress.Trim();
         s.CompanyPhone = CompanyPhone.Trim();
         s.CompanyEmail = CompanyEmail.Trim();
+        s.CompanyGstin = CompanyGstin.Trim();
         s.DefaultTax = DefaultTax;
         await _db.SaveSettingsAsync(s);
 
@@ -226,6 +249,26 @@ public partial class SettingsViewModel : BaseViewModel
 
     [RelayCommand]
     private void CancelGlassTypeEdit() => IsEditingGlassType = false;
+
+    [RelayCommand]
+    private async Task DeleteGlassTypeAsync(GlassType glassType)
+    {
+        if (GlassTypes.Count <= 1)
+        {
+            await Shell.Current.DisplayAlert("Cannot Delete", "At least one glass type must remain.", "OK");
+            return;
+        }
+
+        bool confirm = await Shell.Current.DisplayAlert(
+            "Delete Glass Type",
+            $"Delete '{glassType.Name}'? Existing bills will not be changed.",
+            "Delete",
+            "Cancel");
+        if (!confirm) return;
+
+        await _db.DeleteGlassTypeAsync(glassType);
+        await LoadGlassTypesAsync();
+    }
 
     [RelayCommand]
     private async Task AddThicknessTypeAsync()

@@ -241,7 +241,7 @@ public class PdfService
             }
 
             sb.AppendLine($"""
-                  <tr><td></td><td></td><td></td><td></td><td></td><td><b>Totals:</b></td><td>{item.TotalChargeAreaSqFt:N2}</td><td></td><td></td><td>{item.TotalAmount:N2}</td></tr>
+                <tr><td colspan="5"><b>Totals:</b></td><td>{item.Measurements.Sum(row => row.Quantity)}</td><td>{item.TotalChargeAreaSqFt:N2}</td><td></td><td></td><td>{item.TotalAmount:N2}</td></tr>
                 </table>
                 """);
         }
@@ -500,12 +500,12 @@ public class PdfService
                         sr++;
                     }
 
-                    AddBodyCell(table, "");
-                    AddBodyCell(table, "");
-                    AddBodyCell(table, "");
-                    AddBodyCell(table, "");
-                    AddBodyCell(table, "");
                     AddBodyCell(table, "Totals:", true);
+                    AddBodyCell(table, "");
+                    AddBodyCell(table, "");
+                    AddBodyCell(table, "");
+                    AddBodyCell(table, "");
+                    AddBodyCell(table, item.Measurements.Sum(row => row.Quantity).ToString(), true);
                     AddBodyCell(table, item.TotalChargeAreaSqFt.ToString("N2"));
                     AddBodyCell(table, "");
                     AddBodyCell(table, "");

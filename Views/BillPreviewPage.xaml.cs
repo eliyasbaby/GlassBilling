@@ -223,7 +223,7 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
     {
         var grid = GridWithColumns();
         grid.Add(Cell("Totals:", 0, 0, bold: true, align: TextAlignment.End, columnSpan: 5, fill: HeaderFill));
-        grid.Add(Cell("", 5, 0, fill: HeaderFill));
+        grid.Add(Cell(item.Measurements.Sum(row => row.Quantity).ToString(), 5, 0, bold: true, fill: HeaderFill));
         grid.Add(Cell(item.TotalChargeAreaSqFt.ToString("N2"), 6, 0));
         grid.Add(Cell("", 7, 0));
         grid.Add(Cell("", 8, 0));

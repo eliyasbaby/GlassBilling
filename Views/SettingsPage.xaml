@@ -38,6 +38,24 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <!-- Workstation Code -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Workstation Code" Style="{StaticResource SectionHeader}" />
+                           <Label Text="Assign a different letter (A-Z) to each workstation to avoid duplicate order numbers across local databases. This code is saved on this device, not in database backups, and applies to new orders only."
+                               FontSize="13" TextColor="#757575" />
+                        <Entry Text="{Binding WorkstationCode}"
+                               Placeholder="A"
+                               MaxLength="1"
+                               TextTransform="Uppercase"
+                               Style="{StaticResource FormEntry}" />
+                        <Button Text="Save Workstation Code"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SaveWorkstationCodeCommand}"
+                                Margin="0,8,0,0" />
+                    </VerticalStackLayout>
+                </Frame>
+
                 <!-- Bank Details -->
                 <Frame Style="{StaticResource CardFrame}">
                     <VerticalStackLayout Spacing="4">
@@ -140,29 +158,37 @@
                                 Command="{Binding AddGlassTypeCommand}" />
                         </Grid>
 
-                        <Grid ColumnDefinitions="*,110,70" BackgroundColor="#EDE9FF" Padding="8,4">
+                        <Grid ColumnDefinitions="*,100,Auto" BackgroundColor="#EDE9FF" Padding="8,4">
                             <Label Grid.Column="0" Text="Glass Type" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" />
                             <Label Grid.Column="1" Text="Wastage (in)" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
-                            <Label Grid.Column="2" Text="Edit" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                            <Label Grid.Column="2" Text="Actions" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
                         </Grid>
 
                         <CollectionView ItemsSource="{Binding GlassTypes}">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate x:DataType="models:GlassType">
-                                    <Grid ColumnDefinitions="*,110,70" Padding="8,6">
+                                    <Grid ColumnDefinitions="*,100,Auto" Padding="8,6">
                                         <Label Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="14" VerticalOptions="Center" />
                                         <Label Grid.Column="1" Text="{Binding WastageInches, StringFormat='{0:N2}'}" FontSize="13" TextColor="#757575" HorizontalOptions="Center" VerticalOptions="Center" />
-                                        <Button
-                                            Grid.Column="2"
-                                            Text="Edit"
-                                            BackgroundColor="{StaticResource PrimaryColor}"
-                                            TextColor="White"
-                                            HeightRequest="34"
-                                            CornerRadius="6"
-                                            Padding="8,0"
-                                            FontSize="12"
-                                            CommandParameter="{Binding .}"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=EditGlassTypeCommand}" />
+                                        <HorizontalStackLayout Grid.Column="2" Spacing="6" VerticalOptions="Center">
+                                            <Button
+                                                Text="Edit"
+                                                BackgroundColor="{StaticResource PrimaryColor}"
+                                                TextColor="White"
+                                                HeightRequest="34"
+                                                Padding="8,0"
+                                                FontSize="12"
+                                                CommandParameter="{Binding .}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=EditGlassTypeCommand}" />
+                                            <Button
+                                                Text="Delete"
+                                                Style="{StaticResource DangerButton}"
+                                                HeightRequest="34"
+                                                Padding="8,0"
+                                                FontSize="12"
+                                                CommandParameter="{Binding .}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=DeleteGlassTypeCommand}" />
+                                        </HorizontalStackLayout>
                                     </Grid>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>

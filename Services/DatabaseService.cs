@@ -26,7 +26,26 @@ public class DatabaseService
         await _db.CreateTableAsync<ExtraCharge>();
         await _db.CreateTableAsync<GlassBilling.Models.Settings>();
 
+        await MigrateLegacyWorkstationCodeAsync();
         await SeedDefaultDataAsync();
+    }
+
+    private async Task MigrateLegacyWorkstationCodeAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(WorkstationCodeSettings.GetCode()))
+            return;
+
+        try
+        {
+            var legacyCode = await _db!.ExecuteScalarAsync<string>(
+                "SELECT WorkstationCode FROM AppSettings WHERE WorkstationCode IS NOT NULL AND TRIM(WorkstationCode) <> '' LIMIT 1");
+            if (WorkstationCodeSettings.IsValid(legacyCode))
+                WorkstationCodeSettings.SetCode(legacyCode!);
+        }
+        catch (SQLiteException)
+        {
+            // Older databases may not have the workstation-code column.
+        }
     }
 
     private async Task SeedDefaultDataAsync()
@@ -101,15 +120,71 @@ public class DatabaseService
             : await _db!.UpdateAsync(glassType);
     }
 
+    public async Task<int> DeleteGlassTypeAsync(GlassType glassType)
+    {
+        await InitAsync();
+        return await _db!.DeleteAsync(glassType);
+    }
+
     // ── Bills ─────────────────────────────────────────────────────────────────
 
     public async Task<List<Bill>> GetBillsAsync()
     {
         await InitAsync();
         var bills = await _db!.Table<Bill>().OrderByDescending(b => b.BillDate).ToListAsync();
-        foreach (var bill in bills)
-            bill.Customer = await GetCustomerAsync(bill.CustomerId);
+        await AttachCustomersAsync(bills);
         return bills;
+    }
+
+    public async Task<(List<Bill> Bills, int TotalCount)> GetBillsPageAsync(
+        int page,
+        int pageSize,
+        string searchText)
+    {
+        await InitAsync();
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var searchPattern = $"%{searchText.Trim()}%";
+        const string filter = "BillNumber LIKE ? OR CustomerId IN (SELECT Id FROM Customers WHERE Name LIKE ?)";
+
+        var totalCount = await _db!.ExecuteScalarAsync<int>(
+            $"SELECT COUNT(*) FROM Bills WHERE {filter}", searchPattern, searchPattern);
+        var bills = await _db.QueryAsync<Bill>(
+            $"SELECT * FROM Bills WHERE {filter} ORDER BY BillDate DESC LIMIT ? OFFSET ?",
+            searchPattern, searchPattern, pageSize, (page - 1) * pageSize);
+
+        await AttachCustomersAsync(bills);
+        return (bills, totalCount);
+    }
+
+    public async Task<List<Bill>> GetBillsInDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        await InitAsync();
+        var start = startDate.Date;
+        var endExclusive = endDate.Date.AddDays(1);
+        var bills = await _db!.Table<Bill>()
+            .Where(bill => bill.BillDate >= start && bill.BillDate < endExclusive)
+            .OrderByDescending(bill => bill.BillDate)
+            .ToListAsync();
+
+        await AttachCustomersAsync(bills);
+        return bills;
+    }
+
+    private async Task AttachCustomersAsync(List<Bill> bills)
+    {
+        if (bills.Count == 0)
+            return;
+
+        var customerIds = bills.Select(bill => bill.CustomerId).Distinct().ToArray();
+        var customers = await _db!.Table<Customer>()
+            .Where(customer => customerIds.Contains(customer.Id))
+            .ToListAsync();
+        var customersById = customers.ToDictionary(customer => customer.Id);
+
+        foreach (var bill in bills)
+            if (customersById.TryGetValue(bill.CustomerId, out var customer))
+                bill.Customer = customer;
     }
 
     public async Task<Bill?> GetBillWithDetailsAsync(int billId)
@@ -139,9 +214,13 @@ public class DatabaseService
 
         if (bill.Id == 0)
         {
-            var count = await _db!.Table<Bill>().CountAsync();
-            bill.BillNumber = $"GB-{DateTime.Now:yyyyMM}-{count + 1:D4}";
-            await _db.InsertAsync(bill);
+            var workstationCode = WorkstationCodeSettings.GetCode();
+            if (!WorkstationCodeSettings.IsValid(workstationCode))
+                throw new InvalidOperationException("Set a valid workstation code in Settings before creating a bill.");
+
+            await _db!.InsertAsync(bill);
+            bill.BillNumber = $"TG-PI-{workstationCode}{bill.Id:D4}";
+            await _db.UpdateAsync(bill);
         }
         else
         {
@@ -232,6 +311,16 @@ public class DatabaseService
         return bill.Id;
     }
 
+    public async Task<int> UpdateBillConfirmationAsync(int billId, bool isConfirmed)
+    {
+        await InitAsync();
+        var bill = await _db!.FindAsync<Bill>(billId);
+        if (bill is null) return 0;
+
+        bill.IsConfirmed = isConfirmed;
+        return await _db.UpdateAsync(bill);
+    }
+
     public async Task DeleteBillAsync(int billId)
     {
         await InitAsync();
@@ -248,7 +337,8 @@ public class DatabaseService
         await InitAsync();
         int bills     = await _db!.Table<Bill>().CountAsync();
         int customers = await _db.Table<Customer>().CountAsync();
-        double revenue = (await _db.Table<Bill>().ToListAsync()).Sum(b => b.TotalAmount);
+        double revenue = (await _db.Table<Bill>().Where(b => b.IsConfirmed).ToListAsync())
+            .Sum(b => b.TotalAmount);
         return (bills, customers, revenue);
     }
 
