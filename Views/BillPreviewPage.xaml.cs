@@ -1,5 +1,6 @@
 using GlassBilling.Models;
 using GlassBilling.Services;
+using GlassBilling.ViewModels;
 using System.Text.Json;
 using System.Diagnostics;
 using Microsoft.Maui.Controls;
@@ -11,8 +12,12 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
 {
     private readonly PdfService _pdf;
     private readonly DatabaseService _db;
+    private readonly NewBillViewModel _newBillVm;
     private Bill? _bill;
     private string? _lastFilePath;
+    private bool _pendingGeneration;
+    private bool _isEditingBill;
+    private bool _isGenerating;
 
     private static readonly Color Border = Color.FromArgb("#8F8F8F");
     private static readonly Color HeaderFill = Color.FromArgb("#EEEEEE");
@@ -29,6 +34,11 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query == null) return;
+
+        _pendingGeneration = query.TryGetValue("PendingGeneration", out var pendingValue)
+            && pendingValue is bool pending && pending;
+        _isEditingBill = query.TryGetValue("IsEditingBill", out var editingValue)
+            && editingValue is bool isEditing && isEditing;
 
         if (query.TryGetValue("Bill", out var val) && val is Bill b)
         {
@@ -49,6 +59,8 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         // If caller passed only the BillId, load full details from DB to ensure Items/Measurements are populated
         if (query.TryGetValue("BillId", out var idObj))
         {
+            _pendingGeneration = false;
+            _isEditingBill = false;
             int id = 0;
             if (idObj is int iid) id = iid;
             else if (idObj is long il) id = (int)il;
@@ -85,16 +97,21 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         }
     }
 
-    public BillPreviewPage(PdfService pdf, DatabaseService db)
+    public BillPreviewPage(PdfService pdf, DatabaseService db, NewBillViewModel newBillVm)
     {
         InitializeComponent();
         _pdf = pdf;
         _db = db;
+        _newBillVm = newBillVm;
     }
 
     private async void PopulateBillView()
     {
         if (_bill is null) return;
+        GenerateBillButton.Text = _pendingGeneration
+            ? _isEditingBill ? "Update Bill" : "Generate Bill"
+            : "Generate PDF";
+        GenerateBillButton.IsEnabled = !_isGenerating;
 
         // If Items are empty, ensure we load full details from DB (some navigation paths pass partial objects)
         if ((_bill.Items == null || _bill.Items.Count == 0) && _bill.Id > 0)
@@ -122,7 +139,9 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         CustomerPhoneLabel.Text = $"Phone: {_bill.Customer?.Phone ?? ""}";
 
         BillDateLabel.Text = $"Date : {_bill.BillDate:dd-MM-yyyy}";
-        BillNumberLabel.Text = $"PI No: {_bill.BillNumber}";
+        BillNumberLabel.Text = string.IsNullOrWhiteSpace(_bill.BillNumber)
+            ? "PI No: Assigned when generated"
+            : $"PI No: {_bill.BillNumber}";
         SalesmanLabel.Text = $"Salesman: {_bill.SalesmanName}";
 
         BuildMeasurementTable();
@@ -398,52 +417,86 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         TotalsLayout.Children.Add(grid);
     }
 
-    private async Task SaveBillBeforeFinalizingAsync()
+    private async Task<bool> EnsureBillIsGeneratedAsync()
     {
-        if (_bill is null) return;
+        if (_bill is null)
+            return false;
 
-        try
+        if (_pendingGeneration || _bill.Id == 0)
         {
-            await _db.SaveBillAsync(_bill);
+            await DisplayAlert(
+                "Generate Bill First",
+                "Generate and save the bill before sharing its PDF.",
+                "OK");
+            return false;
         }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Error", $"Could not save the final bill: {ex.Message}", "OK");
-            throw;
-        }
+
+        return true;
     }
 
-    private async void OnGeneratePdfClicked(object sender, EventArgs e)
+    private async void OnGenerateBillClicked(object sender, EventArgs e)
     {
-        if (_bill is null) return;
+        var bill = _bill;
+        if (bill is null || _isGenerating)
+            return;
+
+        var savingNewBill = _pendingGeneration;
+        var billWasSaved = false;
+        _isGenerating = true;
+        GenerateBillButton.IsEnabled = false;
+        LoadingMessage.Text = savingNewBill
+            ? _isEditingBill ? "Updating bill..." : "Generating bill..."
+            : "Generating PDF...";
         LoadingOverlay.IsVisible = true;
         try
         {
-            await SaveBillBeforeFinalizingAsync();
-            _lastFilePath = await _pdf.GenerateBillAsync(_bill, "", "", "");
+            if (savingNewBill)
+            {
+                await _db.SaveBillAsync(bill);
+                billWasSaved = true;
+                _pendingGeneration = false;
+                GenerateBillButton.Text = "Generate PDF";
+                BillNumberLabel.Text = $"PI No: {bill.BillNumber}";
+                await _newBillVm.LoadStep1Async();
+            }
+
+            LoadingMessage.Text = "Generating PDF...";
+            _lastFilePath = await _pdf.GenerateBillAsync(bill, "", "", "");
             await _pdf.OpenBillAsync(_lastFilePath);
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", $"Could not generate bill: {ex.Message}", "OK");
+            var message = savingNewBill && !_pendingGeneration
+                ? $"Order {bill.BillNumber} was {( _isEditingBill ? "updated" : "saved" )}, but its PDF could not be opened: {ex.Message}"
+                : $"Could not generate bill: {ex.Message}";
+            await DisplayAlert("Error", message, "OK");
         }
         finally
         {
+            _isGenerating = false;
+            GenerateBillButton.IsEnabled = true;
             LoadingOverlay.IsVisible = false;
+            LoadingMessage.Text = "Generating PDF...";
         }
+
+        if (billWasSaved)
+            await Shell.Current.GoToAsync($"//{nameof(BillHistoryPage)}");
     }
 
     private async void OnShareClicked(object sender, EventArgs e)
     {
-        if (_bill is null) return;
+        var bill = _bill;
+        if (bill is null || !await EnsureBillIsGeneratedAsync()) return;
 
-        if (_lastFilePath is null)
+        var filePath = _lastFilePath;
+        if (filePath is null)
         {
             LoadingOverlay.IsVisible = true;
             try
             {
-                await SaveBillBeforeFinalizingAsync();
-                _lastFilePath = await _pdf.GenerateBillAsync(_bill, "", "", "");
+                LoadingMessage.Text = "Generating PDF...";
+                filePath = await _pdf.GenerateBillAsync(bill, "", "", "");
+                _lastFilePath = filePath;
             }
             finally
             {
@@ -451,6 +504,7 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
             }
         }
 
-        await _pdf.ShareBillAsync(_lastFilePath, _bill.BillNumber ?? "");
+        if (filePath is not null)
+            await _pdf.ShareBillAsync(filePath, bill.BillNumber ?? "");
     }
 }

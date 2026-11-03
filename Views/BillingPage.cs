@@ -120,12 +120,12 @@ public partial class BillingPage : ContentPage
         GrandTotalLbl.Text = $"₹{grand:N2}";
     }
 
-    private async void OnGenerateBillClicked(object sender, EventArgs e)
+    private async void OnPreviewBillClicked(object sender, EventArgs e)
     {
         LoadingOverlay.IsVisible = true;
         try
         {
-            await _vm.GenerateBillCommand.ExecuteAsync(null);
+            await _vm.PreviewBillCommand.ExecuteAsync(null);
         }
         finally
         {

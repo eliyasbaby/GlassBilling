@@ -124,17 +124,19 @@ public class PdfService
         Directory.CreateDirectory(directory);
         string filePath = Path.Combine(directory, fileName);
         var s = await _db.GetSettingsAsync();
-        await File.WriteAllTextAsync(filePath, BuildHtml(bill, s));
+        var logoBytes = await LoadImageBytesAsync("glasslogo.png");
+        var upiBytes = await LoadImageBytesAsync("upi.jpeg");
+        await File.WriteAllTextAsync(filePath, BuildHtml(bill, s, logoBytes, upiBytes));
         return filePath;
     }
 
-    private static string BuildHtml(Bill bill, GlassBilling.Models.Settings s)
+    private static string BuildHtml(Bill bill, GlassBilling.Models.Settings s, byte[]? logoBytes, byte[]? upiBytes)
     {
         string company = s.CompanyName ?? string.Empty;
         string address = s.CompanyAddress ?? string.Empty;
         string phone = s.CompanyPhone ?? string.Empty;
         string email = s.CompanyEmail ?? string.Empty;
-        string gstin = string.Empty;
+        string gstin = s.CompanyGstin ?? string.Empty;
         string officeNo = phone;
         string bankName = s.BankName ?? string.Empty;
         string bankAcc = s.BankAccount ?? string.Empty;
@@ -148,6 +150,12 @@ public class PdfService
               "4. We are not responsible for any damage or breakage after delivery.\n" +
               "5. Site unloading should be done by the customer."
             : s.TermsConditions;
+        string logoMarkup = logoBytes is null
+            ? string.Empty
+            : "<img class=\"logo\" src=\"" + ImageDataUri(logoBytes, "image/png") + "\" alt=\"Company logo\">";
+        string upiMarkup = upiBytes is null
+            ? string.Empty
+            : "<img class=\"qr\" src=\"" + ImageDataUri(upiBytes, "image/jpeg") + "\" alt=\"UPI QR code\">";
 
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("""
@@ -181,7 +189,7 @@ public class PdfService
 
         sb.AppendLine($"""
             <div class="top">
-              <img class="logo" src="glasslogo.png">
+                            {logoMarkup}
               <div>
                 <h1>{Esc(company)}</h1>
                 <div class="center">{Esc(address).Replace("\n", "<br>")}</div>
@@ -256,7 +264,7 @@ public class PdfService
                 <b>UPI ID:</b> {Esc(upi)}<br><br>
                 <b>Terms and Conditions</b><br>{Esc(terms).Replace("\n", "<br>")}
               </div>
-              <div class="center"><img class="qr" src="upi.jpeg"></div>
+              <div class="center">{upiMarkup}</div>
               <div>
                 <div class="section-title">Extra Charges</div>
                 <table>
@@ -284,6 +292,9 @@ public class PdfService
         return sb.ToString();
     }
 
+    private static string ImageDataUri(byte[] imageBytes, string mediaType) =>
+        $"data:{mediaType};base64,{Convert.ToBase64String(imageBytes)}";
+
     private static string Esc(string? s) =>
         System.Net.WebUtility.HtmlEncode(s ?? string.Empty);
 
@@ -295,7 +306,7 @@ public class PdfService
         string address = s.CompanyAddress ?? string.Empty;
         string phone = s.CompanyPhone ?? string.Empty;
         string email = s.CompanyEmail ?? string.Empty;
-        string gstin = string.Empty;
+        string gstin = s.CompanyGstin ?? string.Empty;
         string officeNo = phone;
         string bankName = s.BankName ?? string.Empty;
         string bankAcc = s.BankAccount ?? string.Empty;
@@ -363,7 +374,7 @@ public class PdfService
             .Select(character => invalidCharacters.Contains(character) ? '_' : character)
             .ToArray());
 
-        return $"Bill_{safeBillNumber}_{DateTime.Now:yyyyMMdd}{extension}";
+        return $"Bill_{safeBillNumber}_{DateTime.Now:yyyyMMdd_HHmmssfff}_{Guid.NewGuid():N}{extension}";
     }
 
     private static string GetWritableDirectory()

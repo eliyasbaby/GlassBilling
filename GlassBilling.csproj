@@ -32,6 +32,8 @@
     <MauiFont Include="Resources\Fonts\*" />
     <MauiImage Include="Resources\Images\**\*" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Include="Resources\Images\glasslogo.png" LogicalName="glasslogo.png" />
+    <MauiAsset Include="Resources\Images\upi.jpeg" LogicalName="upi.jpeg" />
   </ItemGroup>
 
   <ItemGroup>

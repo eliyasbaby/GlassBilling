@@ -6,6 +6,7 @@ public partial class App : Application
     {
         InitializeComponent();
         var logger = services.GetRequiredService<GlassBilling.Services.AppLogService>();
+        _ = logger.InfoAsync($"Application starting. Log directory: {logger.LogDirectory}");
 
         try
         {

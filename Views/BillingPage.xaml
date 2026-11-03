@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:GlassBilling.ViewModels"
+    xmlns:controls="clr-namespace:GlassBilling.Views.Controls"
     Title="{Binding Title}"
     Background="{StaticResource AppBackgroundBrush}">
 
@@ -36,7 +37,8 @@
                             ItemDisplayBinding="{Binding DisplayName}"
                             SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
                             Style="{StaticResource BillingPicker}"
-                            TextColor="{StaticResource TextPrimary}" />
+                            TextColor="{StaticResource TextPrimary}"
+                            SelectedIndexChanged="OnCustomerPickerSelectionChanged" />
 
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
@@ -318,24 +320,37 @@
                 </Frame>
 
                 <Grid Padding="0,8,0,12" HorizontalOptions="Center">
-                    <Button Text="Generate Bill"
+                        <Button Text="Preview"
                             Style="{StaticResource PrimaryButton}"
                             Padding="24,0"
                             MinimumWidthRequest="180"
                             MaximumWidthRequest="260"
                             WidthRequest="200"
                             HorizontalOptions="Center"
-                            Clicked="OnGenerateBillClicked" />
+                            Clicked="OnPreviewBillClicked" />
                 </Grid>
 
             </VerticalStackLayout>
         </ScrollView>
 
+        <Grid BackgroundColor="#80000000" IsVisible="{Binding IsCustomerFormVisible}">
+            <controls:CustomerFormView
+                Title="Add Customer"
+                NameText="{Binding NewCustomerName}"
+                LocationText="{Binding NewCustomerLocation}"
+                PhoneText="{Binding NewCustomerPhone}"
+                AddressText="{Binding NewCustomerAddress}"
+                SaveCommand="{Binding SaveCustomerFromFormCommand}"
+                CancelCommand="{Binding CancelCustomerFormCommand}"
+                HorizontalOptions="Fill"
+                VerticalOptions="Center" />
+        </Grid>
+
         <Grid BackgroundColor="#CC000000"
               x:Name="LoadingOverlay" IsVisible="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                 <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" />
-                <Label Text="Creating bill..." TextColor="White"
+                  <Label Text="Preparing preview..." TextColor="White"
                        FontSize="16" FontAttributes="Bold" />
             </VerticalStackLayout>
         </Grid>

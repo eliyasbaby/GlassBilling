@@ -7,7 +7,6 @@
     Background="{StaticResource AppBackgroundBrush}">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="PDF" Clicked="OnGeneratePdfClicked" />
         <ToolbarItem Text="Share" Clicked="OnShareClicked" />
     </ContentPage.ToolbarItems>
 
@@ -53,11 +52,6 @@
                                     HorizontalTextAlignment="Center" />
                                 <Label
                                     x:Name="CompanyEmailLabel"
-                                    FontSize="16"
-                                    TextColor="Black"
-                                    HorizontalTextAlignment="Center" />
-                                <Label
-                                    x:Name="CompanyGstinLabel"
                                     FontSize="16"
                                     TextColor="Black"
                                     HorizontalTextAlignment="Center" />
@@ -143,11 +137,11 @@
                         <BoxView HeightRequest="1" Color="#9A9A9A" Margin="0,10,0,0" />
 
                         <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="12" Padding="0,8,0,0" HorizontalOptions="Center">
-                            <Button Grid.Column="0" Text="Generate PDF"
+                                <Button x:Name="GenerateBillButton" Grid.Column="0" Text="Generate PDF"
                                     Style="{StaticResource PrimaryButton}"
                                     Padding="18,0"
                                     MinimumWidthRequest="160"
-                                    Clicked="OnGeneratePdfClicked" />
+                                    Clicked="OnGenerateBillClicked" />
                             <Button Grid.Column="1" Text="Share"
                                     Style="{StaticResource OutlineButton}"
                                     Padding="18,0"
@@ -163,7 +157,7 @@
               x:Name="LoadingOverlay" IsVisible="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                 <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" />
-                <Label Text="Generating PDF..." TextColor="White"
+                  <Label x:Name="LoadingMessage" Text="Generating PDF..." TextColor="White"
                        FontSize="16" FontAttributes="Bold" />
             </VerticalStackLayout>
         </Grid>

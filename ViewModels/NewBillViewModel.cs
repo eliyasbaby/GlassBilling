@@ -454,7 +454,7 @@ public partial class NewBillViewModel : BaseViewModel
     public double CalcGrandTotal()  => CalcSubTotal() + CalcExtraTotal() + CalcTax() - CalcDiscount();
 
     [RelayCommand]
-    private async Task GenerateBillAsync()
+    private async Task PreviewBillAsync()
     {
         if (IsBusy) return;
 
@@ -533,19 +533,22 @@ public partial class NewBillViewModel : BaseViewModel
                 };
 
                 int rowNum = 1;
-                foreach (var r in entry.Rows.Where(r => r.Length > 0 && r.Width > 0))
+                foreach (var r in entry.Rows.Where(r =>
+                    r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0))
                 {
+                    var length = r.Length.GetValueOrDefault();
+                    var width = r.Width.GetValueOrDefault();
                     double extra = entry.WastageInMeasurementUnit;
 
-                    double cl   = r.Length + entry.CuttingAllowance + extra;
-                    double cw   = r.Width  + entry.CuttingAllowance + extra;
-                    double area = MeasurementRow.CalcAreaSqFt(r.Length, r.Width, entry.MeasurementUnit, r.Quantity);
+                    double cl   = length + entry.CuttingAllowance + extra;
+                    double cw   = width  + entry.CuttingAllowance + extra;
+                    double area = MeasurementRow.CalcAreaSqFt(length, width, entry.MeasurementUnit, r.Quantity);
                     double cArea= MeasurementRow.CalcAreaSqFt(cl, cw, entry.MeasurementUnit, r.Quantity);
 
                     billItem.Measurements.Add(new MeasurementRow
                     {
-                        Length        = r.Length,
-                        Width         = r.Width,
+                        Length        = length,
+                        Width         = width,
                         ChargeLength  = cl,
                         ChargeWidth   = cw,
                         Unit          = entry.MeasurementUnit,
@@ -569,14 +572,12 @@ public partial class NewBillViewModel : BaseViewModel
 
             bill.Recalculate();
 
-            int billId = await _db.SaveBillAsync(bill);
-            var saved  = await _db.GetBillWithDetailsAsync(billId);
-
-            IsEditingBill = false;
-            EditingBillId = 0;
-            UpdateTitle();
-
-            var navParams = new Dictionary<string, object> { { "BillId", billId } };
+            var navParams = new Dictionary<string, object>
+            {
+                { "Bill", bill },
+                { "PendingGeneration", true },
+                { "IsEditingBill", EditingBillId > 0 }
+            };
             await Shell.Current.GoToAsync(nameof(BillPreviewPage), navParams);
         }
         finally { IsBusy = false; }
@@ -655,18 +656,21 @@ public partial class BillItemEntry : ObservableObject
         _ => SelectedWastageInches * 25.4
     };
 
-    public bool HasValidRows => Rows.Any(r => r.Length > 0 && r.Width > 0);
+    public bool HasValidRows => Rows.Any(r =>
+        r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0);
     public double CalculatedTotal => CalcTotal();
 
     public double CalcTotal()
     {
         double area = Rows
-            .Where(r => r.Length > 0 && r.Width > 0)
+            .Where(r => r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0)
             .Sum(r => {
+                var length = r.Length.GetValueOrDefault();
+                var width = r.Width.GetValueOrDefault();
                 double extra = WastageInMeasurementUnit;
 
-                double cl = r.Length + CuttingAllowance + extra;
-                double cw = r.Width  + CuttingAllowance + extra;
+                double cl = length + CuttingAllowance + extra;
+                double cw = width  + CuttingAllowance + extra;
                 return MeasurementRow.CalcAreaSqFt(cl, cw, MeasurementUnit, r.Quantity);
             });
         return area * Rate;
@@ -725,8 +729,8 @@ public partial class BillItemEntry : ObservableObject
 public partial class MeasurementEntryRow : ObservableObject
 {
     public int    RowNumber { get; set; }
-    [ObservableProperty] private double _length;
-    [ObservableProperty] private double _width;
+    [ObservableProperty] private double? _length;
+    [ObservableProperty] private double? _width;
     [ObservableProperty] private int    _quantity = 1;
 }
 
