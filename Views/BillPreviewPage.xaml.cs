@@ -233,7 +233,7 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         grid.Add(Cell(row.Quantity.ToString(), 5, 0));
         grid.Add(Cell(row.ChargeAreaSqFt.ToString("N2"), 6, 0));
         grid.Add(RateCell(item), 7, 0);
-        grid.Add(Cell(item.Shape, 8, 0));
+        grid.Add(Cell(row.Shape, 8, 0));
         grid.Add(Cell(amount.ToString("N2"), 9, 0, align: TextAlignment.End));
         return grid;
     }

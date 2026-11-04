@@ -65,22 +65,18 @@
                         <DataTemplate x:DataType="vm:BillItemEntry">
                             <Frame BackgroundColor="White" CornerRadius="12" Padding="14" HasShadow="True">
                                 <VerticalStackLayout Spacing="10">
-                                    <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="4">
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="2">
                                             <Label Text="Glass Type" Style="{StaticResource FormLabel}" />
                                             <Picker ItemsSource="{Binding AvailableGlassTypes}"
                                                     SelectedItem="{Binding GlassDescription, Mode=TwoWay}"
                                                     Style="{StaticResource BillingPicker}"
-                                                    HeightRequest="34"
-                                                    FontSize="13"
                                                     TextColor="{StaticResource TextPrimary}"
                                                     SelectedIndexChanged="OnAnySelectionChanged" />
                                         </VerticalStackLayout>
-                                    </Grid>
 
-                                    <Grid ColumnDefinitions="*,180" ColumnSpacing="10">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="4">
-                                            <Label Text="Select Thickness Types" Style="{StaticResource FormLabel}" />
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                            <Label Text="Thickness Type" Style="{StaticResource FormLabel}" />
                                             <Picker ItemsSource="{Binding AvailableTypes}"
                                                     ItemDisplayBinding="{Binding Name}"
                                                     SelectedItem="{Binding ThicknessType, Mode=TwoWay}"
@@ -89,7 +85,7 @@
                                                     TextColor="{StaticResource TextPrimary}" />
                                         </VerticalStackLayout>
 
-                                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                        <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="2">
                                             <Label Text="Unit" Style="{StaticResource FormLabel}" />
                                             <Picker SelectedItem="{Binding MeasurementUnit, Mode=TwoWay}"
                                                     Style="{StaticResource BillingPicker}"
@@ -105,18 +101,17 @@
                                                 </Picker.ItemsSource>
                                             </Picker>
                                         </VerticalStackLayout>
-                                    </Grid>
 
-                                    <VerticalStackLayout Spacing="4">
-                                        <Label Text="Item Rate (per sq ft)" Style="{StaticResource FormLabel}" />
-                                                            <Entry Text="{Binding Rate, Mode=TwoWay}"
-                                                                   Keyboard="Numeric"
-                                                                   HorizontalTextAlignment="End"
-                                                                   HorizontalOptions="Start"
-                                                                   WidthRequest="180"
-                                                                   Style="{StaticResource BillingEntry}"
-                                                                   TextChanged="OnAnyValueChanged" />
-                                    </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="2">
+                                            <Label Text="Item Rate (per sq ft)" Style="{StaticResource FormLabel}" />
+                                            <Entry Text="{Binding Rate, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   HorizontalTextAlignment="End"
+                                                   HorizontalOptions="Fill"
+                                                   Style="{StaticResource BillingEntry}"
+                                                   TextChanged="OnAnyValueChanged" />
+                                        </VerticalStackLayout>
+                                    </Grid>
 
                                     <!-- <Grid ColumnDefinitions="32,*,*,70,42"
                                           BackgroundColor="{StaticResource PrimaryColor}"
@@ -130,7 +125,7 @@
                                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Rows}" Spacing="2">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="vm:MeasurementEntryRow">
-                                                <Grid ColumnDefinitions="32,*,*,70,42" Padding="2,3" ColumnSpacing="4">
+                                                <Grid ColumnDefinitions="Auto,2*,2*,3*,*,Auto" Padding="2,3" ColumnSpacing="4">
                                                     <Label Grid.Column="0"
                                                            Text="{Binding RowNumber}"
                                                            FontSize="12"
@@ -149,13 +144,22 @@
                                                            Placeholder="Width"
                                                            Style="{StaticResource BillingEntry}"
                                                            TextChanged="OnAnyValueChanged" />
-                                                       <Entry Grid.Column="3"
+                                                    <Picker Grid.Column="3"
+                                                            ItemsSource="{Binding AvailableShapes}"
+                                                            SelectedItem="{Binding Shape, Mode=TwoWay}"
+                                                            AutomationProperties.Name="Shape"
+                                                            Style="{StaticResource BillingPicker}"
+                                                            HeightRequest="44"
+                                                            FontSize="13"
+                                                            TextColor="{StaticResource TextPrimary}"
+                                                            SelectedIndexChanged="OnAnySelectionChanged" />
+                                                       <Entry Grid.Column="4"
                                                            Text="{Binding Quantity, Mode=TwoWay}"
                                                            Keyboard="Numeric"
                                                            Placeholder="1"
                                                            Style="{StaticResource BillingEntry}"
                                                            TextChanged="OnAnyValueChanged" />
-                                                    <Button Grid.Column="4"
+                                                    <Button Grid.Column="5"
                                                             Text="X"
                                                             BackgroundColor="Transparent"
                                                             TextColor="#E53935"

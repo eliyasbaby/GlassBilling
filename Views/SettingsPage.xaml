@@ -196,6 +196,56 @@
                     </VerticalStackLayout>
                 </Frame>
 
+                <!-- Glass Shapes -->
+                <Frame Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Glass Shapes" Style="{StaticResource SectionHeader}" />
+                            <Button
+                                Grid.Column="1"
+                                Text="+ Add"
+                                Style="{StaticResource OutlineButton}"
+                                HeightRequest="36"
+                                Padding="12,0"
+                                Command="{Binding AddGlassShapeCommand}" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto" BackgroundColor="#EDE9FF" Padding="8,4">
+                            <Label Grid.Column="0" Text="Shape" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" />
+                            <Label Grid.Column="1" Text="Actions" FontAttributes="Bold" FontSize="12" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding GlassShapes}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:GlassShape">
+                                    <Grid ColumnDefinitions="*,Auto" Padding="8,6">
+                                        <Label Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" FontSize="14" VerticalOptions="Center" />
+                                        <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                            <Button
+                                                Text="Edit"
+                                                BackgroundColor="{StaticResource PrimaryColor}"
+                                                TextColor="White"
+                                                HeightRequest="34"
+                                                Padding="8,0"
+                                                FontSize="12"
+                                                CommandParameter="{Binding .}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=EditGlassShapeCommand}" />
+                                            <Button
+                                                Text="Delete"
+                                                Style="{StaticResource DangerButton}"
+                                                HeightRequest="34"
+                                                Padding="8,0"
+                                                FontSize="12"
+                                                CommandParameter="{Binding .}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SettingsViewModel}}, Path=DeleteGlassShapeCommand}" />
+                                        </HorizontalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
                 <!-- Backup & Restore -->
                 <Frame Style="{StaticResource CardFrame}">
                     <VerticalStackLayout Spacing="10">
@@ -264,6 +314,28 @@
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
                         <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelGlassTypeEditCommand}" />
                         <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveGlassTypeCommand}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+        <!-- Add or edit glass shape -->
+        <Grid BackgroundColor="#80000000" IsVisible="{Binding IsEditingGlassShape}">
+            <Frame
+                BackgroundColor="White"
+                CornerRadius="16"
+                Padding="20"
+                Margin="20"
+                VerticalOptions="Center">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Glass Shape" Style="{StaticResource SectionHeader}" Margin="0,0,0,8" />
+
+                    <Label Text="Shape Name" Style="{StaticResource FormLabel}" />
+                    <Entry Text="{Binding EditGlassShapeName}" Placeholder="e.g. L Shape" Style="{StaticResource FormEntry}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
+                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource OutlineButton}" Command="{Binding CancelGlassShapeEditCommand}" />
+                        <Button Grid.Column="1" Text="Save" Style="{StaticResource PrimaryButton}" Command="{Binding SaveGlassShapeCommand}" />
                     </Grid>
                 </VerticalStackLayout>
             </Frame>

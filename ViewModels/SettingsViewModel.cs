@@ -13,6 +13,7 @@ public partial class SettingsViewModel : BaseViewModel
 
     [ObservableProperty] private ObservableCollection<ThicknessType> _thicknessTypes = new();
     [ObservableProperty] private ObservableCollection<GlassType> _glassTypes = new();
+    [ObservableProperty] private ObservableCollection<GlassShape> _glassShapes = new();
     [ObservableProperty] private string _companyName    = string.Empty;
     [ObservableProperty] private string _companyAddress = string.Empty;
     [ObservableProperty] private string _companyPhone   = string.Empty;
@@ -41,6 +42,10 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private GlassType _editingGlassType = new();
     [ObservableProperty] private string _editGlassTypeName = string.Empty;
     [ObservableProperty] private double _editGlassWastageInches = 2;
+
+    [ObservableProperty] private bool _isEditingGlassShape;
+    [ObservableProperty] private GlassShape _editingGlassShape = new();
+    [ObservableProperty] private string _editGlassShapeName = string.Empty;
 
     public SettingsViewModel(DatabaseService db, BackupService backup)
     {
@@ -123,6 +128,14 @@ public partial class SettingsViewModel : BaseViewModel
         var list = await _db.GetGlassTypesAsync();
         GlassTypes.Clear();
         foreach (var glassType in list) GlassTypes.Add(glassType);
+    }
+
+    [RelayCommand]
+    public async Task LoadGlassShapesAsync()
+    {
+        var list = await _db.GetGlassShapesAsync();
+        GlassShapes.Clear();
+        foreach (var glassShape in list) GlassShapes.Add(glassShape);
     }
 
     [RelayCommand]
@@ -268,6 +281,68 @@ public partial class SettingsViewModel : BaseViewModel
 
         await _db.DeleteGlassTypeAsync(glassType);
         await LoadGlassTypesAsync();
+    }
+
+    [RelayCommand]
+    private void EditGlassShape(GlassShape glassShape)
+    {
+        EditingGlassShape = glassShape;
+        EditGlassShapeName = glassShape.Name;
+        IsEditingGlassShape = true;
+    }
+
+    [RelayCommand]
+    private void AddGlassShape()
+    {
+        EditingGlassShape = new GlassShape { SortOrder = GlassShapes.Count + 1 };
+        EditGlassShapeName = string.Empty;
+        IsEditingGlassShape = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveGlassShapeAsync()
+    {
+        var name = EditGlassShapeName.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            await Shell.Current.DisplayAlert("Validation", "Glass shape name is required.", "OK");
+            return;
+        }
+
+        if (GlassShapes.Any(shape => shape.Id != EditingGlassShape.Id &&
+            string.Equals(shape.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            await Shell.Current.DisplayAlert("Validation", "That glass shape already exists.", "OK");
+            return;
+        }
+
+        EditingGlassShape.Name = name;
+        await _db.SaveGlassShapeAsync(EditingGlassShape);
+        IsEditingGlassShape = false;
+        await LoadGlassShapesAsync();
+    }
+
+    [RelayCommand]
+    private void CancelGlassShapeEdit() => IsEditingGlassShape = false;
+
+    [RelayCommand]
+    private async Task DeleteGlassShapeAsync(GlassShape glassShape)
+    {
+        if (GlassShapes.Count <= 1)
+        {
+            await Shell.Current.DisplayAlert("Cannot Delete", "At least one glass shape must remain.", "OK");
+            return;
+        }
+
+        bool confirm = await Shell.Current.DisplayAlert(
+            "Delete Glass Shape",
+            $"Delete '{glassShape.Name}'? Existing bills will not be changed.",
+            "Delete",
+            "Cancel");
+        if (!confirm) return;
+
+        await _db.DeleteGlassShapeAsync(glassShape);
+        await LoadGlassShapesAsync();
     }
 
     [RelayCommand]

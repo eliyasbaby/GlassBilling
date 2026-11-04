@@ -241,7 +241,7 @@ public class PdfService
                       <td>{sr}</td><td>{row.Length:N2}</td><td>{row.Width:N2}</td>
                       <td>{row.ChargeLength:N2}</td><td>{row.ChargeWidth:N2}</td>
                       <td>{row.Quantity}</td><td>{row.ChargeAreaSqFt:N2}</td>
-                      <td>{item.PricePerSqFt:N3}</td><td>{Esc(item.Shape)}</td>
+                      <td>{item.PricePerSqFt:N3}</td><td>{Esc(row.Shape)}</td>
                       <td>{row.ChargeAreaSqFt * item.PricePerSqFt:N2}</td>
                     </tr>
                     """);
@@ -506,7 +506,7 @@ public class PdfService
                         AddBodyCell(table, row.Quantity.ToString());
                         AddBodyCell(table, row.ChargeAreaSqFt.ToString("N2"));
                         AddBodyCell(table, item.PricePerSqFt.ToString("N3"));
-                        AddBodyCell(table, item.Shape);
+                        AddBodyCell(table, row.Shape);
                         AddBodyCell(table, (row.ChargeAreaSqFt * item.PricePerSqFt).ToString("N2"), true);
                         sr++;
                     }

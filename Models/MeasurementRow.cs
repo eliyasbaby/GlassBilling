@@ -20,6 +20,8 @@ public class MeasurementRow
 
     public string Unit { get; set; } = "mm";
 
+    public string Shape { get; set; } = "Block";
+
     public int Quantity { get; set; } = 1;
 
     public double AreaInSqFt { get; set; }       // actual area

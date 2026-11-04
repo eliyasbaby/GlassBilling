@@ -12,6 +12,7 @@ public partial class NewBillViewModel : BaseViewModel
     private readonly DatabaseService _db;
     private readonly PdfService _pdf;
     private List<GlassType> _glassTypes = new();
+    private List<GlassShape> _glassShapes = new();
     private bool _isInitialized;
     private Bill? _editingBill;
 
@@ -144,10 +145,12 @@ public partial class NewBillViewModel : BaseViewModel
         AvailableThicknessTypes.Clear();
         foreach (var type in allTypes) AvailableThicknessTypes.Add(type);
         _glassTypes = await _db.GetGlassTypesAsync();
+        _glassShapes = await _db.GetGlassShapesAsync();
 
         var customers = await _db.GetCustomersAsync();
         RefreshCustomers(customers);
-        SelectedCustomer = customers.FirstOrDefault(c => c.Id == bill.CustomerId) ?? Customers.Skip(1).FirstOrDefault();
+        SelectedCustomer = Customers.FirstOrDefault(c => c.Id == bill.CustomerId)
+            ?? Customers.Skip(1).FirstOrDefault();
 
         Notes = bill.Notes;
         TaxPercent = bill.TaxPercent;
@@ -197,16 +200,21 @@ public partial class NewBillViewModel : BaseViewModel
             entry.ThicknessType = entry.AvailableTypes.FirstOrDefault(t => t.Id == matchingType.Id) ?? matchingType;
             entry.Rate = persistedRate;
             entry.EnsureGlassTypes(_glassTypes, item.GlassDescription);
+            entry.EnsureShapes(_glassShapes, item.Measurements.Select(row => row.Shape).Append(item.Shape));
 
             foreach (var row in item.Measurements)
             {
-                entry.Rows.Add(new MeasurementEntryRow
+                var measurementEntryRow = new MeasurementEntryRow
                 {
                     RowNumber = row.RowNumber,
                     Length = row.Length,
                     Width = row.Width,
+                    Shape = string.IsNullOrWhiteSpace(row.Shape) ? item.Shape : row.Shape,
                     Quantity = row.Quantity
-                });
+                };
+                foreach (var shape in entry.AvailableShapes)
+                    measurementEntryRow.AvailableShapes.Add(shape);
+                entry.Rows.Add(measurementEntryRow);
             }
 
             if (entry.Rows.Count == 0)
@@ -265,6 +273,7 @@ public partial class NewBillViewModel : BaseViewModel
             AvailableThicknessTypes.Clear();
             foreach (var t in types) AvailableThicknessTypes.Add(t);
             _glassTypes = await _db.GetGlassTypesAsync();
+            _glassShapes = await _db.GetGlassShapesAsync();
 
             if (_editingBill is not null)
                 RestoreBillEntries(_editingBill);
@@ -282,6 +291,7 @@ public partial class NewBillViewModel : BaseViewModel
         AvailableThicknessTypes.Clear();
         foreach (var t in typesList) AvailableThicknessTypes.Add(t);
         _glassTypes = await _db.GetGlassTypesAsync();
+        _glassShapes = await _db.GetGlassShapesAsync();
 
         if (!_isInitialized)
         {
@@ -337,13 +347,16 @@ public partial class NewBillViewModel : BaseViewModel
 
     private void RefreshCustomers(IEnumerable<Customer> customers)
     {
+        var selectedCustomerId = SelectedCustomer?.Id;
         Customers.Clear();
         Customers.Add(CreateAddCustomerOption());
         foreach (var customer in customers)
             Customers.Add(customer);
 
-        if (SelectedCustomer is null || SelectedCustomer.Id == -1 || !Customers.Contains(SelectedCustomer))
-            SelectedCustomer = Customers.Skip(1).FirstOrDefault();
+        SelectedCustomer = selectedCustomerId is > 0
+            ? Customers.FirstOrDefault(customer => customer.Id == selectedCustomerId)
+                ?? Customers.Skip(1).FirstOrDefault()
+            : Customers.Skip(1).FirstOrDefault();
     }
 
     [RelayCommand]
@@ -401,11 +414,12 @@ public partial class NewBillViewModel : BaseViewModel
                 ThicknessType = AvailableThicknessTypes.FirstOrDefault() ?? new ThicknessType(),
                 MeasurementUnit = "mm",
                 CuttingAllowance = 0,
-                Shape = "Block",
+                Shape = _glassShapes.FirstOrDefault()?.Name ?? "Block",
                 Rate = AvailableThicknessTypes.FirstOrDefault()?.PricePerSqFt ?? 0
             };
 
             entry.EnsureGlassTypes(_glassTypes);
+            entry.EnsureShapes(_glassShapes);
 
             foreach (var type in AvailableThicknessTypes)
                 entry.AvailableTypes.Add(type);
@@ -529,7 +543,7 @@ public partial class NewBillViewModel : BaseViewModel
                     MeasurementUnit  = entry.MeasurementUnit,
                     CuttingAllowance = entry.CuttingAllowance,
                     PricePerSqFt     = entry.Rate,
-                    Shape            = entry.Shape,
+                    Shape            = entry.Rows.FirstOrDefault()?.Shape ?? entry.Shape,
                 };
 
                 int rowNum = 1;
@@ -549,6 +563,7 @@ public partial class NewBillViewModel : BaseViewModel
                     {
                         Length        = length,
                         Width         = width,
+                        Shape         = r.Shape,
                         ChargeLength  = cl,
                         ChargeWidth   = cw,
                         Unit          = entry.MeasurementUnit,
@@ -616,6 +631,7 @@ public partial class BillItemEntry : ObservableObject
 
     public ObservableCollection<ThicknessType> AvailableTypes { get; } = new();
     public ObservableCollection<string> AvailableGlassTypes { get; } = new();
+    public ObservableCollection<string> AvailableShapes { get; } = new();
     public ObservableCollection<MeasurementEntryRow> Rows { get; } = new();
 
     public void EnsureGlassTypes(IEnumerable<GlassType> glassTypes, string? currentValue = null)
@@ -642,6 +658,27 @@ public partial class BillItemEntry : ObservableObject
             GlassDescription = currentValue;
         else if (!AvailableGlassTypes.Contains(GlassDescription))
             GlassDescription = AvailableGlassTypes.FirstOrDefault() ?? string.Empty;
+    }
+
+    public void EnsureShapes(IEnumerable<GlassShape> glassShapes, IEnumerable<string?>? retainedShapes = null)
+    {
+        AvailableShapes.Clear();
+        foreach (var glassShape in glassShapes)
+        {
+            if (!string.IsNullOrWhiteSpace(glassShape.Name) &&
+                !AvailableShapes.Contains(glassShape.Name))
+                AvailableShapes.Add(glassShape.Name);
+        }
+
+        if (retainedShapes is not null)
+        {
+            foreach (var shape in retainedShapes.Where(shape => !string.IsNullOrWhiteSpace(shape)))
+                if (!AvailableShapes.Contains(shape!))
+                    AvailableShapes.Add(shape!);
+        }
+
+        if (!AvailableShapes.Contains(Shape))
+            Shape = AvailableShapes.FirstOrDefault() ?? "Block";
     }
 
     private double SelectedWastageInches =>
@@ -691,7 +728,16 @@ public partial class BillItemEntry : ObservableObject
 
     public void AddRow()
     {
-        var row = new MeasurementEntryRow { RowNumber = Rows.Count + 1 };
+        var defaultShape = AvailableShapes.FirstOrDefault() ?? Shape;
+        var row = new MeasurementEntryRow
+        {
+            RowNumber = Rows.Count + 1,
+            Shape = Rows.LastOrDefault()?.Shape ?? defaultShape
+        };
+        foreach (var shape in AvailableShapes)
+            row.AvailableShapes.Add(shape);
+        if (!row.AvailableShapes.Contains(row.Shape))
+            row.AvailableShapes.Add(row.Shape);
         row.PropertyChanged += (_, _) => NotifyTotalChanged();
         Rows.Add(row);
         NotifyTotalChanged();
@@ -729,8 +775,10 @@ public partial class BillItemEntry : ObservableObject
 public partial class MeasurementEntryRow : ObservableObject
 {
     public int    RowNumber { get; set; }
+    public ObservableCollection<string> AvailableShapes { get; } = new();
     [ObservableProperty] private double? _length;
     [ObservableProperty] private double? _width;
+    [ObservableProperty] private string _shape = "Block";
     [ObservableProperty] private int    _quantity = 1;
 }
 

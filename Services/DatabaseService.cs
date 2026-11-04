@@ -20,14 +20,34 @@ public class DatabaseService
         await _db.CreateTableAsync<Customer>();
         await _db.CreateTableAsync<ThicknessType>();
         await _db.CreateTableAsync<GlassType>();
+        await _db.CreateTableAsync<GlassShape>();
         await _db.CreateTableAsync<Bill>();
         await _db.CreateTableAsync<BillItem>();
         await _db.CreateTableAsync<MeasurementRow>();
+        await MigrateMeasurementShapesAsync();
         await _db.CreateTableAsync<ExtraCharge>();
         await _db.CreateTableAsync<GlassBilling.Models.Settings>();
 
         await MigrateLegacyWorkstationCodeAsync();
         await SeedDefaultDataAsync();
+    }
+
+    private async Task MigrateMeasurementShapesAsync()
+    {
+        var shapeColumnCount = await _db!.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM pragma_table_info('MeasurementRows') WHERE name = 'Shape'");
+        if (shapeColumnCount > 0)
+            return;
+
+        await _db.ExecuteAsync("ALTER TABLE MeasurementRows ADD COLUMN Shape TEXT NOT NULL DEFAULT 'Block'");
+        await _db.ExecuteAsync("""
+            UPDATE MeasurementRows
+            SET Shape = COALESCE(
+                (SELECT NULLIF(BillItems.Shape, '')
+                 FROM BillItems
+                 WHERE BillItems.Id = MeasurementRows.BillItemId),
+                'Block')
+            """);
     }
 
     private async Task MigrateLegacyWorkstationCodeAsync()
@@ -55,6 +75,9 @@ public class DatabaseService
 
         if (await _db.Table<GlassType>().CountAsync() == 0)
             await _db.InsertAllAsync(GlassType.Defaults);
+
+        if (await _db.Table<GlassShape>().CountAsync() == 0)
+            await _db.InsertAllAsync(GlassShape.Defaults);
     }
 
     // ── Customers ─────────────────────────────────────────────────────────────
@@ -124,6 +147,26 @@ public class DatabaseService
     {
         await InitAsync();
         return await _db!.DeleteAsync(glassType);
+    }
+
+    public async Task<List<GlassShape>> GetGlassShapesAsync()
+    {
+        await InitAsync();
+        return await _db!.Table<GlassShape>().OrderBy(shape => shape.SortOrder).ToListAsync();
+    }
+
+    public async Task<int> SaveGlassShapeAsync(GlassShape glassShape)
+    {
+        await InitAsync();
+        return glassShape.Id == 0
+            ? await _db!.InsertAsync(glassShape)
+            : await _db!.UpdateAsync(glassShape);
+    }
+
+    public async Task<int> DeleteGlassShapeAsync(GlassShape glassShape)
+    {
+        await InitAsync();
+        return await _db!.DeleteAsync(glassShape);
     }
 
     // ── Bills ─────────────────────────────────────────────────────────────────
