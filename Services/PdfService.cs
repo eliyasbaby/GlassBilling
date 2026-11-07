@@ -281,7 +281,7 @@ public class PdfService
                 <table>
                   <tr><td><b>Total (&#8377;)</b></td><td>{bill.SubTotal:N2}</td></tr>
                   <tr><td><b>Tax ({bill.TaxPercent:N0}%)</b></td><td>{bill.TaxAmount:N2}</td></tr>
-                  <tr><td><b>Grand Total (&#8377;)</b></td><td><b>{bill.TotalAmount:N2}</b></td></tr>
+                  <tr><td><b>Grand Total (&#8377;)</b></td><td><b>{bill.TotalAmount:N0}</b></td></tr>
                 </table>
               </div>
             </div>
@@ -646,7 +646,7 @@ public class PdfService
             AddBodyCell(table, "Discount (\u20B9)", true);
             AddBodyCell(table, bill.DiscountAmount.ToString("N2"));
             AddBodyCell(table, "Grand Total (\u20B9)", true);
-            AddBodyCell(table, bill.TotalAmount.ToString("N2"), true);
+            AddBodyCell(table, bill.TotalAmount.ToString("N0"), true);
         });
     }
 #endif

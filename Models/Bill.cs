@@ -40,7 +40,10 @@ public class Bill
     [Ignore] public List<ExtraCharge> ExtraCharges { get; set; } = new();
 
     [Ignore] public string FormattedDate  => BillDate.ToString("dd/MM/yyyy");
-    [Ignore] public string FormattedTotal => $"₹{TotalAmount:N2}";
+    [Ignore] public string FormattedTotal => $"₹{TotalAmount:N0}";
+
+        public static double RoundTotalAmount(double amount) =>
+            Math.Round(amount, MidpointRounding.AwayFromZero);
     [Ignore] public string ConfirmationStatus => IsConfirmed ? "Confirmed" : "Quote";
 
     /// <summary>Recalculate SubTotal, TaxAmount, TotalAmount from current items/extra charges</summary>
@@ -50,6 +53,6 @@ public class Bill
         ExtraChargesTotal = ExtraCharges.Sum(e => e.Amount);
         // Tax is applied on the subtotal + extra charges after discount is deducted
         TaxAmount         = (SubTotal + ExtraChargesTotal - DiscountAmount) * TaxPercent / 100.0;
-        TotalAmount       = SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount;
+        TotalAmount       = RoundTotalAmount(SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount);
     }
 }

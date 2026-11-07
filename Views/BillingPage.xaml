@@ -156,7 +156,6 @@
                                                        <Entry Grid.Column="4"
                                                            Text="{Binding Quantity, Mode=TwoWay}"
                                                            Keyboard="Numeric"
-                                                           Placeholder="1"
                                                            Style="{StaticResource BillingEntry}"
                                                            TextChanged="OnAnyValueChanged" />
                                                     <Button Grid.Column="5"

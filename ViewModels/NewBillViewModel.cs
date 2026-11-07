@@ -433,7 +433,12 @@ public partial class NewBillViewModel : BaseViewModel
 
     [RelayCommand] private void AddMeasurementRow()    => CurrentEntry?.AddRow();
     [RelayCommand] private void RemoveLastRow()        => CurrentEntry?.RemoveLastRow();
-    [RelayCommand] private void RemoveRow(MeasurementEntryRow row) => CurrentEntry?.RemoveRow(row);
+    [RelayCommand]
+    private void RemoveRow(MeasurementEntryRow row)
+    {
+        var entry = BillItemEntries.FirstOrDefault(item => item.Rows.Contains(row));
+        entry?.RemoveRow(row);
+    }
     [RelayCommand] private void AddRowToEntry(BillItemEntry entry) => entry.AddRow();
     [RelayCommand] private void RemoveLastRowFromEntry(BillItemEntry entry) => entry.RemoveLastRow();
 
@@ -465,7 +470,8 @@ public partial class NewBillViewModel : BaseViewModel
     public double CalcExtraTotal()  => ExtraCharges.Sum(e => e.Amount);
     public double CalcDiscount()    => DiscountAmount;
     public double CalcTax()         => (CalcSubTotal() + CalcExtraTotal() - CalcDiscount()) * TaxPercent / 100.0;
-    public double CalcGrandTotal()  => CalcSubTotal() + CalcExtraTotal() + CalcTax() - CalcDiscount();
+    public double CalcGrandTotal() => Bill.RoundTotalAmount(
+        CalcSubTotal() + CalcExtraTotal() + CalcTax() - CalcDiscount());
 
     [RelayCommand]
     private async Task PreviewBillAsync()
@@ -499,7 +505,7 @@ public partial class NewBillViewModel : BaseViewModel
         if (BillItemEntries.Any(e => !e.HasValidRows))
         {
             await Shell.Current.DisplayAlert("Validation",
-                "Each thickness section needs at least one measurement with Length and Width greater than 0.", "OK");
+                "Each thickness section needs at least one measurement with Length, Width, and Quantity greater than 0.", "OK");
             return;
         }
 
@@ -548,16 +554,19 @@ public partial class NewBillViewModel : BaseViewModel
 
                 int rowNum = 1;
                 foreach (var r in entry.Rows.Where(r =>
-                    r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0))
+                    r.Length.GetValueOrDefault() > 0 &&
+                    r.Width.GetValueOrDefault() > 0 &&
+                    r.Quantity.GetValueOrDefault() > 0))
                 {
                     var length = r.Length.GetValueOrDefault();
                     var width = r.Width.GetValueOrDefault();
+                    var quantity = r.Quantity.GetValueOrDefault();
                     double extra = entry.WastageInMeasurementUnit;
 
                     double cl   = length + entry.CuttingAllowance + extra;
                     double cw   = width  + entry.CuttingAllowance + extra;
-                    double area = MeasurementRow.CalcAreaSqFt(length, width, entry.MeasurementUnit, r.Quantity);
-                    double cArea= MeasurementRow.CalcAreaSqFt(cl, cw, entry.MeasurementUnit, r.Quantity);
+                    double area = MeasurementRow.CalcAreaSqFt(length, width, entry.MeasurementUnit, quantity);
+                    double cArea= MeasurementRow.CalcAreaSqFt(cl, cw, entry.MeasurementUnit, quantity);
 
                     billItem.Measurements.Add(new MeasurementRow
                     {
@@ -567,7 +576,7 @@ public partial class NewBillViewModel : BaseViewModel
                         ChargeLength  = cl,
                         ChargeWidth   = cw,
                         Unit          = entry.MeasurementUnit,
-                        Quantity      = r.Quantity,
+                        Quantity      = quantity,
                         AreaInSqFt    = area,
                         ChargeAreaSqFt= cArea,
                         RowNumber     = rowNum++
@@ -694,21 +703,26 @@ public partial class BillItemEntry : ObservableObject
     };
 
     public bool HasValidRows => Rows.Any(r =>
-        r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0);
+        r.Length.GetValueOrDefault() > 0 &&
+        r.Width.GetValueOrDefault() > 0 &&
+        r.Quantity.GetValueOrDefault() > 0);
     public double CalculatedTotal => CalcTotal();
 
     public double CalcTotal()
     {
         double area = Rows
-            .Where(r => r.Length.GetValueOrDefault() > 0 && r.Width.GetValueOrDefault() > 0)
+            .Where(r => r.Length.GetValueOrDefault() > 0 &&
+                r.Width.GetValueOrDefault() > 0 &&
+                r.Quantity.GetValueOrDefault() > 0)
             .Sum(r => {
                 var length = r.Length.GetValueOrDefault();
                 var width = r.Width.GetValueOrDefault();
+                var quantity = r.Quantity.GetValueOrDefault();
                 double extra = WastageInMeasurementUnit;
 
                 double cl = length + CuttingAllowance + extra;
                 double cw = width  + CuttingAllowance + extra;
-                return MeasurementRow.CalcAreaSqFt(cl, cw, MeasurementUnit, r.Quantity);
+                return MeasurementRow.CalcAreaSqFt(cl, cw, MeasurementUnit, quantity);
             });
         return area * Rate;
     }
@@ -774,12 +788,18 @@ public partial class BillItemEntry : ObservableObject
 
 public partial class MeasurementEntryRow : ObservableObject
 {
-    public int    RowNumber { get; set; }
+    private int _rowNumber;
+    public int RowNumber
+    {
+        get => _rowNumber;
+        set => SetProperty(ref _rowNumber, value);
+    }
+
     public ObservableCollection<string> AvailableShapes { get; } = new();
     [ObservableProperty] private double? _length;
     [ObservableProperty] private double? _width;
     [ObservableProperty] private string _shape = "Block";
-    [ObservableProperty] private int    _quantity = 1;
+    [ObservableProperty] private int?   _quantity;
 }
 
 public partial class ExtraChargeEntry : ObservableObject

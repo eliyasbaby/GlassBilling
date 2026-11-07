@@ -413,7 +413,7 @@ public partial class BillPreviewPage : ContentPage, IQueryAttributable
         grid.Add(Cell("Discount (\u20B9)", 0, 2, bold: true, align: TextAlignment.End), 0, 2);
         grid.Add(Cell(_bill.DiscountAmount.ToString("N2"), 1, 2), 1, 2);
         grid.Add(Cell("Grand Total (\u20B9)", 0, 3, bold: true, align: TextAlignment.End), 0, 3);
-        grid.Add(Cell(_bill.TotalAmount.ToString("N2"), 1, 3, bold: true), 1, 3);
+        grid.Add(Cell(_bill.TotalAmount.ToString("N0"), 1, 3, bold: true), 1, 3);
         TotalsLayout.Children.Add(grid);
     }
 

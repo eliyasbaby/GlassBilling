@@ -117,7 +117,7 @@ public partial class BillingPage : ContentPage
         TaxLbl.Text = $"Tax ({_vm.TaxPercent:N0}%)";
         TaxAmtLbl.Text = $"₹{tax:N2}";
         DiscountAmtLbl.Text = $"₹{discount:N2}";
-        GrandTotalLbl.Text = $"₹{grand:N2}";
+        GrandTotalLbl.Text = $"₹{grand:N0}";
     }
 
     private async void OnPreviewBillClicked(object sender, EventArgs e)
