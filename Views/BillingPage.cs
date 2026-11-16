@@ -65,6 +65,16 @@ public partial class BillingPage : ContentPage
 
     private void OnAnyValueChanged(object sender, TextChangedEventArgs e) => ScheduleTotalsRefresh();
 
+    private void OnDiscountValueChanged(object sender, TextChangedEventArgs e)
+    {
+        // An empty Entry cannot be converted to the bound double, so the source
+        // otherwise retains the previous discount value.
+        if (string.IsNullOrWhiteSpace(e.NewTextValue))
+            _vm.DiscountAmount = 0;
+
+        ScheduleTotalsRefresh();
+    }
+
     private void OnAnySelectionChanged(object sender, EventArgs e) => ScheduleTotalsRefresh();
 
     private void OnApplyThicknessClicked(object sender, EventArgs e)

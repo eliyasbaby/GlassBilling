@@ -400,7 +400,13 @@ public partial class NewBillViewModel : BaseViewModel
     public void RebuildBillItemEntries()
     {
         NumberOfThicknessTypes = Math.Clamp(NumberOfThicknessTypes, 1, 20);
-        BuildBillItemEntries();
+        while (BillItemEntries.Count > NumberOfThicknessTypes)
+            BillItemEntries.RemoveAt(BillItemEntries.Count - 1);
+
+        while (BillItemEntries.Count < NumberOfThicknessTypes)
+            BillItemEntries.Add(CreateBillItemEntry());
+
+        OnPropertyChanged(nameof(BillItemEntries));
     }
 
     private void BuildBillItemEntries()
@@ -408,27 +414,30 @@ public partial class NewBillViewModel : BaseViewModel
         BillItemEntries.Clear();
 
         for (int i = 0; i < NumberOfThicknessTypes; i++)
-        {
-            var entry = new BillItemEntry
-            {
-                ThicknessType = AvailableThicknessTypes.FirstOrDefault() ?? new ThicknessType(),
-                MeasurementUnit = "mm",
-                CuttingAllowance = 0,
-                Shape = _glassShapes.FirstOrDefault()?.Name ?? "Block",
-                Rate = AvailableThicknessTypes.FirstOrDefault()?.PricePerSqFt ?? 0
-            };
-
-            entry.EnsureGlassTypes(_glassTypes);
-            entry.EnsureShapes(_glassShapes);
-
-            foreach (var type in AvailableThicknessTypes)
-                entry.AvailableTypes.Add(type);
-
-            entry.AddRow();
-            BillItemEntries.Add(entry);
-        }
+            BillItemEntries.Add(CreateBillItemEntry());
 
         OnPropertyChanged(nameof(BillItemEntries));
+    }
+
+    private BillItemEntry CreateBillItemEntry()
+    {
+        var entry = new BillItemEntry
+        {
+            ThicknessType = AvailableThicknessTypes.FirstOrDefault() ?? new ThicknessType(),
+            MeasurementUnit = "mm",
+            CuttingAllowance = 0,
+            Shape = _glassShapes.FirstOrDefault()?.Name ?? "Block",
+            Rate = AvailableThicknessTypes.FirstOrDefault()?.PricePerSqFt ?? 0
+        };
+
+        entry.EnsureGlassTypes(_glassTypes);
+        entry.EnsureShapes(_glassShapes);
+
+        foreach (var type in AvailableThicknessTypes)
+            entry.AvailableTypes.Add(type);
+
+        entry.AddRow();
+        return entry;
     }
 
     [RelayCommand] private void AddMeasurementRow()    => CurrentEntry?.AddRow();
@@ -469,7 +478,7 @@ public partial class NewBillViewModel : BaseViewModel
     public double CalcSubTotal()    => BillItemEntries.Sum(e => e.CalcTotal());
     public double CalcExtraTotal()  => ExtraCharges.Sum(e => e.Amount);
     public double CalcDiscount()    => DiscountAmount;
-    public double CalcTax()         => (CalcSubTotal() + CalcExtraTotal() - CalcDiscount()) * TaxPercent / 100.0;
+    public double CalcTax()         => CalcSubTotal() * TaxPercent / 100.0;
     public double CalcGrandTotal() => Bill.RoundTotalAmount(
         CalcSubTotal() + CalcExtraTotal() + CalcTax() - CalcDiscount());
 

@@ -46,13 +46,12 @@ public class Bill
             Math.Round(amount, MidpointRounding.AwayFromZero);
     [Ignore] public string ConfirmationStatus => IsConfirmed ? "Confirmed" : "Quote";
 
-    /// <summary>Recalculate SubTotal, TaxAmount, TotalAmount from current items/extra charges</summary>
+    /// <summary>Recalculate totals; tax applies to the subtotal, while extras are tax-inclusive.</summary>
     public void Recalculate()
     {
         SubTotal          = Items.Sum(i => i.TotalAmount);
         ExtraChargesTotal = ExtraCharges.Sum(e => e.Amount);
-        // Tax is applied on the subtotal + extra charges after discount is deducted
-        TaxAmount         = (SubTotal + ExtraChargesTotal - DiscountAmount) * TaxPercent / 100.0;
+        TaxAmount         = SubTotal * TaxPercent / 100.0;
         TotalAmount       = RoundTotalAmount(SubTotal + ExtraChargesTotal + TaxAmount - DiscountAmount);
     }
 }

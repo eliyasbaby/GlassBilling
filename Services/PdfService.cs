@@ -212,7 +212,7 @@ public class PdfService
                 Office: {Esc(officeNo)}<br>
                 E-mail: {Esc(email)}<br>
                 GSTIN: {Esc(gstin)}<br>
-                Salesman:
+                Salesman: {Esc(bill.SalesmanName)}
               </div>
             </div>
             <div class="rule"></div>
@@ -460,7 +460,7 @@ public class PdfService
                 c.Item().Text($"Office: {officeNo}").FontSize(11);
                 c.Item().Text($"E-mail: {email}").FontSize(11);
                 c.Item().Text($"GSTIN: {gstin}").FontSize(11);
-                c.Item().Text("Salesman:").FontSize(11);
+                c.Item().Text($"Salesman: {bill.SalesmanName}").FontSize(11);
             });
         });
     }

@@ -255,7 +255,7 @@
                         <Grid ColumnDefinitions="*,170" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="Tax / GST (%)" Style="{StaticResource FormLabel}" />
-                                <Label Text="Applied to subtotal + extras"
+                                <Label Text="Applied to subtotal , Extra charges are inclusive of tax"
                                        FontSize="11"
                                        TextColor="{StaticResource TextSecondary}" />
                             </VerticalStackLayout>
@@ -270,16 +270,17 @@
                         <Grid ColumnDefinitions="*,170" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Column="0" Spacing="4">
                                 <Label Text="Discount" Style="{StaticResource FormLabel}" />
-                                <Label Text="Optional amount or %"
+                                <Label Text="Amount to be discounted from total"
                                        FontSize="11"
                                        TextColor="{StaticResource TextSecondary}" />
                             </VerticalStackLayout>
                             <Entry Grid.Column="1"
+                                   x:Name="DiscountEntry"
                                    Text="{Binding DiscountAmount, Mode=TwoWay}"
                                    Keyboard="Numeric"
                                    HorizontalTextAlignment="End"
                                    Style="{StaticResource BillingEntry}"
-                                   TextChanged="OnAnyValueChanged" />
+                                   TextChanged="OnDiscountValueChanged" />
                         </Grid>
 
                         <Label Text="Notes" Style="{StaticResource FormLabel}" />
